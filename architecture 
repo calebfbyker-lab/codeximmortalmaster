@@ -1,0 +1,480 @@
+codeximmortal-warlab/
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .editorconfig
+├── .pre-commit-config.yaml
+├── Makefile
+├── docker-compose.yml
+├── pyproject.toml
+├── package.json
+├── .env.example
+├── warlabcore.py
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       ├── deploy-staging.yml
+│       ├── nft-mint.yml
+│       └── security-audit.yml
+├── docs/
+│   ├── architecture/
+│   │   ├── overview.md
+│   │   ├── sovereign-layers.md
+│   │   ├── mn-net.md
+│   │   ├── checkpoint-lifecycle.md
+│   │   └── threat-model.md
+│   ├── doctrine/
+│   │   ├── operating-principles.md
+│   │   ├── human-gate-policy.md
+│   │   ├── classification-policy.md
+│   │   └── lineage-policy.md
+│   ├── runbooks/
+│   │   ├── deployment.md
+│   │   ├── key-rotation.md
+│   │   ├── shard-recovery.md
+│   │   ├── incident-response.md
+│   │   └── rollback.md
+│   ├── api/
+│   │   ├── gateway.md
+│   │   ├── threat-board.md
+│   │   ├── nft-vault.md
+│   │   └── inference.md
+│   ├── threat-models/
+│   │   ├── prompt-injection.md
+│   │   ├── model-poisoning.md
+│   │   ├── wallet-drift.md
+│   │   └── supply-chain.md
+│   └── adr/
+│       ├── 0001-monorepo.md
+│       ├── 0002-pqc-spine.md
+│       ├── 0003-storage-mesh.md
+│       └── 0004-checkpoint-attestation.md
+├── config/
+│   ├── settings.py
+│   ├── validator.py
+│   ├── vault_loader.py
+│   └── profiles/
+│       ├── dev.env
+│       ├── staging.env
+│       ├── production.env
+│       └── airgap.env
+├── schemas/
+│   ├── sovereign_event.schema.json
+│   ├── nft_metadata.schema.json
+│   ├── training_sample.schema.json
+│   ├── training_batch.schema.json
+│   ├── checkpoint_manifest.schema.json
+│   ├── policy_decision.schema.json
+│   ├── playbook.schema.json
+│   └── gate_decision.schema.json
+├── shared/
+│   ├── __init__.py
+│   ├── types/
+│   │   ├── sovereign.py
+│   │   ├── training.py
+│   │   ├── lineage.py
+│   │   └── telemetry.py
+│   ├── models/
+│   │   ├── sovereign_event.py
+│   │   ├── training_batch.py
+│   │   ├── checkpoint_manifest.py
+│   │   ├── evidence_package.py
+│   │   └── gate_request.py
+│   ├── constants/
+│   │   ├── classifications.py
+│   │   ├── algorithms.py
+│   │   ├── domains.py
+│   │   └── ci_modules.py
+│   ├── logging/
+│   │   ├── logger.py
+│   │   ├── formatters.py
+│   │   └── correlation.py
+│   ├── telemetry/
+│   │   ├── spans.py
+│   │   ├── metrics.py
+│   │   └── events.py
+│   ├── security/
+│   │   ├── hashing.py
+│   │   ├── sanitization.py
+│   │   └── policy_helpers.py
+│   └── lineage/
+│       ├── merkle.py
+│       ├── attest.py
+│       └── manifests.py
+├── pqc-spine/
+├── storage-mesh/
+├── ai-pipeline/
+├── neural-fabric/
+├── nft-vault/
+├── playbook-engine/
+├── threat-board/
+├── dashboard/
+├── integration/
+├── infra/
+├── scripts/
+├── tests/
+└── output/pqc-spine/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── pqcspine/
+│   ├── __init__.py
+│   ├── kem.py
+│   ├── signing.py
+│   ├── tls.py
+│   ├── rotation.py
+│   ├── vault.py
+│   ├── message_bus.py
+│   ├── channel.py
+│   ├── replay_defender.py
+│   ├── certificate_authority.py
+│   └── policies/
+│       ├── key_policy.yaml
+│       └── rotation_policy.yaml
+└── tests/
+    ├── test_kem.py
+    ├── test_signing.py
+    ├── test_tls.py
+    ├── test_rotation.py
+    └── test_message_bus.pyai-pipeline/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── aipipeline/
+│   ├── __init__.py
+│   ├── ingest/
+│   │   ├── sovereign_event_builder.py
+│   │   ├── source_connectors.py
+│   │   ├── manifest_builder.py
+│   │   └── corpus_registry.py
+│   ├── curation/
+│   │   ├── dedupe.py
+│   │   ├── redaction.py
+│   │   ├── labeling.py
+│   │   ├── provenance.py
+│   │   └── quality_scoring.py
+│   ├── security/
+│   │   ├── data_poisoning_detector.py
+│   │   ├── model_poisoning_detector.py
+│   │   ├── prompt_injection_detector.py
+│   │   ├── adversarial_input_detector.py
+│   │   └── checkpoint_verifier.py
+│   ├── tokenization/
+│   │   ├── tokenizer_train.py
+│   │   ├── tokenizer_eval.py
+│   │   └── vocab_registry.py
+│   ├── training/
+│   │   ├── pretrain.py
+│   │   ├── sft.py
+│   │   ├── preference_optimization.py
+│   │   ├── distributed_runner.py
+│   │   ├── scheduler.py
+│   │   └── gpu_dispatch_client.py
+│   ├── evaluation/
+│   │   ├── benchmark_runner.py
+│   │   ├── safety_eval.py
+│   │   ├── redteam_eval.py
+│   │   ├── policy_eval.py
+│   │   └── scorecards.py
+│   ├── checkpoints/
+│   │   ├── registry.py
+│   │   ├── signer.py
+│   │   ├── promotion.py
+│   │   ├── rollback.py
+│   │   └── manifest_writer.py
+│   ├── adapters/
+│   │   ├── sentinel_adapter.py
+│   │   ├── strategist_adapter.py
+│   │   ├── archivist_adapter.py
+│   │   └── executor_adapter.py
+│   └── datasets/
+│       ├── doctrine/
+│       ├── telemetry/
+│       ├── simulation/
+│       ├── code_repair/
+│       └── eval/
+└── tests/
+    ├── test_curation.py
+    ├── test_security.py
+    ├── test_tokenizer.py
+    ├── test_training.py
+    └── test_checkpoints.pyneural-fabric/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── neuralfabric/
+│   ├── __init__.py
+│   ├── state.py
+│   ├── graph.py
+│   ├── consensus.py
+│   ├── runner.py
+│   ├── nodes/
+│   │   ├── sentinel.py
+│   │   ├── strategist.py
+│   │   ├── archivist.py
+│   │   └── executor.py
+│   ├── memory/
+│   │   ├── graph_store.py
+│   │   ├── embeddings.py
+│   │   ├── decay.py
+│   │   └── sync.py
+│   ├── humangate/
+│   │   ├── gate.py
+│   │   ├── registry.py
+│   │   └── audit.py
+│   ├── telemetry/
+│   │   ├── otel.py
+│   │   └── metrics.py
+│   ├── learning/
+│   │   ├── collector.py
+│   │   ├── curator.py
+│   │   ├── batch_manager.py
+│   │   ├── finetuner.py
+│   │   └── rollback.py
+│   └── evolution/
+│       ├── gap_analyzer.py
+│       ├── proposal_evaluator.py
+│       ├── code_generator.py
+│       ├── safety_validator.py
+│       ├── deployer.py
+│       └── metaprompt_generator.py
+└── tests/
+    ├── test_graph.py
+    ├── test_consensus.py
+    ├── test_memory.py
+    └── test_humangate.pynft-vault/
+├── README.md
+├── package.json
+├── hardhat.config.js
+├── Dockerfile
+├── .env.example
+├── contracts/
+│   ├── CodexImmortalVault.sol
+│   ├── AccessTierManager.sol
+│   ├── MultisigCustody.sol
+│   ├── ZKVerifier.sol
+│   ├── ChainOfCustody.sol
+│   ├── CodexGovernor.sol
+│   ├── PolicyRegistry.sol
+│   └── IdentityRegistry.sol
+├── circuits/
+│   ├── authorized_operator.circom
+│   ├── time_window.circom
+│   ├── integrity_proof.circom
+│   └── shard_reconstruction.circom
+├── scripts/
+│   ├── deploy.js
+│   ├── compile_circuits.sh
+│   ├── genproof_authorized_operator.py
+│   ├── genproof_time_window.py
+│   ├── genproof_integrity.py
+│   ├── genproof_shard_reconstruction.py
+│   └── propose_policy_update.py
+├── services/
+│   ├── metadata_builder.py
+│   ├── minter.py
+│   ├── custody.py
+│   ├── zk_attestation.py
+│   └── identity_bridge_client.py
+└── test/
+    ├── vault.test.js
+    ├── governance.test.js
+    └── custody.test.jsplaybook-engine/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── playbookengine/
+│   ├── __init__.py
+│   ├── schema.py
+│   ├── executor.py
+│   ├── trigger_engine.py
+│   ├── blast_radius.py
+│   ├── approvals.py
+│   ├── library/
+│   │   ├── lockdown_lattice.yaml
+│   │   ├── sovereign_restore.yaml
+│   │   ├── trust_purge.yaml
+│   │   ├── model_isolation.yaml
+│   │   └── shard_rebalance.yaml
+│   └── actions/
+│       ├── storage_actions.py
+│       ├── crypto_actions.py
+│       ├── agent_actions.py
+│       ├── nft_actions.py
+│       └── network_actions.py
+└── tests/
+    ├── test_executor.py
+    ├── test_trigger_engine.py
+    └── test_blast_radius.pythreat-board/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── threatboard/
+│   ├── __init__.py
+│   ├── api.py
+│   ├── models.py
+│   ├── detector.py
+│   ├── signal_processor.py
+│   ├── websocket.py
+│   ├── evidence_linker.py
+│   └── scoring.py
+└── tests/
+    ├── test_api.py
+    ├── test_detector.py
+    └── test_scoring.pydashboard/
+├── README.md
+├── package.json
+├── Dockerfile
+├── public/
+│   ├── index.html
+│   ├── favicon.svg
+│   └── assets/
+│       ├── logo.svg
+│       └── theme.css
+└── src/
+    ├── css/
+    │   ├── tokens.css
+    │   ├── layout.css
+    │   └── components.css
+    ├── js/
+    │   ├── app.js
+    │   ├── router.js
+    │   ├── state.js
+    │   └── websocket.js
+    ├── api/
+    │   ├── gateway.js
+    │   ├── threatboard.js
+    │   ├── nftvault.js
+    │   └── inference.js
+    ├── widgets/
+    │   ├── shield-score.js
+    │   ├── shard-heatmap.js
+    │   ├── anomaly-table.js
+    │   ├── ooda-timeline.js
+    │   └── nft-feed.js
+    └── views/
+        ├── overview.js
+        ├── incidents.js
+        ├── agents.js
+        ├── storage.js
+        └── governance.jsintegration/
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+├── apigateway/
+│   ├── gateway.py
+│   └── middleware/
+│       ├── pqc_tls_verifier.py
+│       ├── unified_auth.py
+│       ├── rate_limiter.py
+│       ├── audit_logger.py
+│       ├── lineage_injector.py
+│       └── secret_redactor.py
+├── notifications/
+│   ├── slack.py
+│   ├── email.py
+│   ├── webhook.py
+│   ├── cli.py
+│   └── nft_gate.py
+├── federation/
+│   ├── node_registry.py
+│   ├── gossip.py
+│   ├── crossnode_consensus.py
+│   ├── shared_threat_intel.py
+│   └── policy_sync.py
+├── identity/
+│   ├── spiffe_client.py
+│   ├── wallet_linker.py
+│   └── identity_bridge.py
+└── web3storage/
+    ├── ipfs_connector.py
+    ├── filecoin_connector.py
+    ├── pinata_connector.py
+    └── router.pyinfra/
+├── docker/
+│   ├── compose/
+│   │   ├── base.yml
+│   │   ├── dev.yml
+│   │   ├── staging.yml
+│   │   └── airgap.yml
+│   └── images/
+│       ├── api.Dockerfile
+│       ├── workers.Dockerfile
+│       └── dashboard.Dockerfile
+├── k8s/
+│   ├── namespace.yaml
+│   ├── network-policies.yaml
+│   ├── ingress.yaml
+│   ├── vault-agent-injector.yaml
+│   ├── spire-server.yaml
+│   ├── spire-agent.yaml
+│   ├── services/
+│   │   ├── gateway.yaml
+│   │   ├── threatboard.yaml
+│   │   ├── inference.yaml
+│   │   └── dashboard.yaml
+│   ├── monitoring/
+│   │   ├── prometheus.yaml
+│   │   ├── loki.yaml
+│   │   └── tempo.yaml
+│   └── rbac/
+│       ├── serviceaccounts.yaml
+│       ├── roles.yaml
+│       └── rolebindings.yaml
+├── otel/
+│   └── otel-collector-config.yaml
+├── grafana/
+│   └── dashboards/
+│       └── warlab-overview.json
+├── tls/
+│   ├── nginx.conf
+│   ├── Caddyfile
+│   └── generate_pqc_certs.sh
+└── ci/
+    ├── sbom/
+    ├── slither/
+    └── security-policies/scripts/
+├── setup.sh
+├── keyceremony.py
+├── quantumthreatscan.py
+├── deaddropvault.py
+├── codexconsole.py
+├── bootstrap_repo.py
+├── redteam/
+│   ├── runner.py
+│   ├── redteam_nftvault_tests.py
+│   ├── redteam_storagemesh_tests.py
+│   ├── redteam_agent_consensus_tests.py
+│   └── redteam_pqc_tests.py
+└── simulation/
+    ├── runner.py
+    ├── scenario_builder.py
+    ├── adversary_emulator.py
+    ├── observer.py
+    └── report_generator.pytests/
+├── integration/
+│   ├── test_end_to_end_ooda.py
+│   ├── test_checkpoint_promotion.py
+│   ├── test_playbook_execution.py
+│   └── test_wallet_identity_bridge.py
+├── e2e/
+│   ├── test_dashboard_flow.py
+│   └── test_threat_resolution_flow.py
+├── performance/
+│   ├── test_message_bus_load.py
+│   ├── test_training_pipeline_throughput.py
+│   └── test_storage_recovery_time.py
+├── security/
+│   ├── test_prompt_injection_resistance.py
+│   ├── test_model_poisoning_detection.py
+│   └── test_pqc_policy_enforcement.py
+└── fixtures/
+    ├── sovereign_events/
+    ├── checkpoints/
+    └── shards/
