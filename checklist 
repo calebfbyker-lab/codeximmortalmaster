@@ -1,0 +1,125 @@
+# CodexImmortal War Lab — Agent Build Checklist
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+
+## 0. Monorepo scaffold and configuration
+
+- [ ] `setup.sh` monorepo scaffold script
+  - Creates /pqc-spine, /storage-mesh, /neural-fabric, /nft-vault,
+    /playbook-engine, /threat-board, /dashboard, /integration, /infra, /scripts.
+- [ ] `config/settings.py` (Pydantic BaseSettings)
+- [ ] `config/profiles/dev.env`, `staging.env`, `production.env`, `airgap.env`
+- [ ] `config/vault_loader.py` (HashiCorp Vault integration)
+- [ ] `config/validator.py` (startup validation)
+
+## 1. CI/CD and version control (GitHub Actions)
+
+- [ ] `.github/workflows/ci.yml` (lint, tests, security scan, PQC check)
+- [ ] `.github/workflows/deploy-staging.yml` (build, deploy, integration tests)
+- [ ] `.github/workflows/nft-mint.yml` (deployment provenance NFT minting)
+- [ ] `.github/workflows/security-audit.yml` (weekly SBOM and vulnerability scan)
+
+## 2. Agent runtime (phi layer and orchestrator)
+
+- [x] `agents/phi_weighting.py` (PhiWeightingEngine, SovereignEventScore)
+- [x] `agents/route_optimizer.py` (RouteOption, RouteOptimizer)
+- [x] `agents/growth_scheduler.py` (GrowthCheckpoint, GrowthScheduler)
+- [x] `agents/sovereign_agent.py` (SovereignTask, ExecutionDecision, SovereignAgent)
+- [x] `agents/agent_orchestrator.py` (AgentOrchestrator, proof log)
+- [ ] `agents/goal_library.py` (8 named goals CI-001→CI-041, SubGoal DAG)
+- [ ] `agents/README.md` (runtime and module docs)
+
+## 3. Neural fabric (MN-NET agents + OODA)
+
+- [x] `neural_fabric/state.py` (WarLabState)
+- [x] `neural_fabric/nodes/sentinel.py` (SentinelNode, AnomalyReport)
+- [x] `neural_fabric/nodes/strategist.py` (StrategistNode, PayoffMatrix)
+- [x] `neural_fabric/nodes/archivist.py` (ArchivistNode, MemoryEntry)
+- [x] `neural_fabric/nodes/executor.py` (ExecutorNode, ExecutionPlan)
+- [x] `neural_fabric/consensus.py` (ConsensusEngine, ConsensusResult)
+- [x] `neural_fabric/graph.py` (WarLabGraph — SENTINEL→STRATEGIST→ARCHIVIST→EXECUTOR→CONSENSUS)
+- [x] `neural_fabric/runner.py` (WarLabRunner — run_ooda, run_consensus, run_continuous)
+- [ ] `neural_fabric/memory/graph_store.py` (MemoryGraphStore — NetworkX + Neo4j)
+- [ ] `neural_fabric/memory/embeddings.py` (MemoryEmbedder + FAISS)
+- [ ] `neural_fabric/memory/decay.py` (MemoryDecayManager)
+- [ ] `neural_fabric/memory/sync.py` (MemorySync — IPFS shard sync)
+- [ ] `neural_fabric/adversarial_shield.py` (PromptInjectionDetector, ModelPoisoningDetector, DataPoisoningDetector, AdversarialInputDetector, ShieldOrchestrator)
+
+## 4. PQC Spine and Shard Vault
+
+- [ ] `pqc-spine/keys.py` (ML-KEM + ML-DSA wrappers, key lifecycle)
+- [ ] `pqc-spine/hndl_triage.py` (Harvest-Now-Decrypt-Later exposure mapping)
+- [ ] `storage-mesh/tamper_detection.py` (MerkleTree, ShardIntegrityMonitor, TamperAlarm, AuditChain)
+- [ ] `storage-mesh/ipfs_client.py` (IPFS integration)
+- [ ] `storage-mesh/arweave_client.py` (Arweave integration)
+- [ ] `storage-mesh/filecoin_client.py` (Filecoin integration)
+
+## 5. NFT Vault and Playbook Engine
+
+- [ ] `nft-vault/contracts/HardwareRepairNFT.sol`
+- [ ] `nft-vault/contracts/VulnerabilityNFT.sol`
+- [ ] `nft-vault/contracts/LineageNFT.sol`
+- [ ] `nft-vault/contracts/RepairNFT.sol`
+- [ ] `nft-vault/contracts/CommandFabricNFT.sol`
+- [ ] `nft-vault/contracts/ZkVerifier.sol` (Groth16/PLONK/STARK)
+- [ ] `nft-vault/hardhat.config.js` + tests
+- [ ] `playbook-engine/core.py` (Playbook schema, executor)
+- [ ] `playbook-engine/playbooks/lockdown_lattice.py`
+- [ ] `playbook-engine/playbooks/trust_purge.py`
+- [ ] `playbook-engine/playbooks/sovereign_restore.py`
+- [ ] `playbook-engine/playbooks/federation_sync.py`
+
+## 6. Threat Board and OSINT Fusion
+
+- [ ] `threat-board/api.py` (threat signal ingestion endpoints)
+- [ ] `threat-board/engine.py` (IOC scoring, signal classification)
+- [ ] `threat-board/osint_adapters/shodan.py`
+- [ ] `threat-board/osint_adapters/virustotal.py`
+- [ ] `threat-board/osint_adapters/otx.py`
+- [ ] `threat-board/osint_adapters/greynoise.py`
+- [ ] `threat-board/osint_adapters/nvd.py`
+- [ ] `threat-board/osint_adapters/misp.py`
+- [ ] `threat-board/red_team.py` (kill-chain simulation, MITRE mapping)
+
+## 7. Integration and Infra
+
+- [ ] `integration/ipfs_router.py` (shard/asset routing to IPFS/Filecoin)
+- [ ] `integration/wallet_spiffe_bridge.py` (identity + custody integration)
+- [ ] `integration/pqc_tls_proxy.py` (PQC-secured reverse proxy client)
+- [ ] `infra/docker-compose.yml`
+- [ ] `infra/k8s/api-deployment.yaml`
+- [ ] `infra/k8s/worker-deployment.yaml`
+- [ ] `infra/k8s/nft-vault-deployment.yaml`
+- [ ] `infra/reverse_proxy/nginx.conf` or `infra/reverse_proxy/caddyfile`
+
+## 8. Backend APIs and Dashboard
+
+- [ ] Backend service (FastAPI or equivalent)
+  - [ ] `/agents` (CRUD, status, configuration)
+  - [ ] `/tasks` (submit, list, status, retry)
+  - [ ] `/signals` (threat input, OODA runs, consensus)
+  - [ ] `/nft` (mint, verify, list, provenance)
+  - [ ] `/proof-log` (read orchestrator proof log)
+- [ ] Frontend dashboard (Next.js / React)
+  - [ ] Agent creation and configuration pages
+  - [ ] Task management and queues
+  - [ ] Threat board and MN-NET views
+  - [ ] Deployment / CI/CD status
+  - [ ] Logs, metrics, approvals, and Human Gate console
+- [x] HTML dashboard blueprint (initial UI layout)
+
+## 9. Scripts and Simulation
+
+- [ ] `scripts/quantum_threat_scanner.py`
+- [ ] `scripts/key_ceremony_cli.py`
+- [ ] `scripts/dead_drop_vault.py`
+- [ ] `scripts/simulation_runner.py` (OODA, playbooks, multi-agent load)
+- [ ] `scripts/prompt_evolution_engine.py` (LineageNFT and promotion logic)
+
+## 10. Observability, Security, and Recovery
+
+- [ ] OpenTelemetry configuration (metrics + traces)
+- [ ] Logging pipeline (structured JSON → Loki/Elasticsearch/cloud logging)
+- [ ] Sentry or equivalent error tracking
+- [ ] SBOM generation and dependency scanning
+- [ ] Backup and restore scripts for Postgres, Neo4j, and shard storage
+- [ ] Recovery playbooks wired to LOCKDOWN-LATTICE, TRUST PURGE, SOVEREIGN RESTORE, FEDERATION SYNC
