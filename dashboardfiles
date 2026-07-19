@@ -1,0 +1,941 @@
+CodexImmortal Dashboard Code Bundle
+README.md
+# CodexImmortal Dashboard
+
+A copy-pasteable React + Tailwind dashboard demo for the CodexImmortal ecosystem.
+
+## Included
+- Sidebar with Agent Lifecycle Management
+- CRUD flow for agents: list, add, edit, terminate
+- Interactive Task Orchestration Log with simulated WebSocket updates
+- Auto-scrolling live log stream
+- Responsive dashboard layout with CSS Grid and Flexbox
+- Mock data and local state management
+
+## Run
+```bash
+npm install
+npm run dev
+
+## index.html
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodexImmortal Dashboard</title>
+  </head>
+  <body class="bg-slate-950">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+manifest.json
+{
+  "repository": "codeximmortal-dashboard",
+  "files": [
+    "README.md",
+    "index.html",
+    "package.json",
+    "postcss.config.cjs",
+    "src/App.tsx",
+    "src/components/AgentLifecyclePanel.tsx",
+    "src/components/DashboardLayout.tsx",
+    "src/components/Sidebar.tsx",
+    "src/components/TaskLogPanel.tsx",
+    "src/data/mockAgents.ts",
+    "src/data/mockTasks.ts",
+    "src/hooks/useAgentStore.ts",
+    "src/hooks/useSimulatedTaskStream.ts",
+    "src/index.css",
+    "src/main.tsx",
+    "src/types.ts",
+    "tailwind.config.cjs",
+    "tsconfig.json",
+    "vite.config.ts"
+  ]
+}
+package.json
+{
+  "name": "codeximmortal-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1"
+  }
+}
+
+postcss.config.cjs
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+
+src/App.tsx
+import { DashboardLayout } from './components/DashboardLayout';
+import { Sidebar } from './components/Sidebar';
+import { AgentLifecyclePanel } from './components/AgentLifecyclePanel';
+import { TaskLogPanel } from './components/TaskLogPanel';
+import { useAgentStore } from './hooks/useAgentStore';
+import { useSimulatedTaskStream } from './hooks/useSimulatedTaskStream';
+
+export default function App() {
+  const agentStore = useAgentStore();
+  const logStream = useSimulatedTaskStream(agentStore.agents);
+
+  return (
+    <DashboardLayout
+      sidebar={
+        <Sidebar
+          activeCount={agentStore.activeCount}
+          terminatedCount={agentStore.terminatedCount}
+          totalLogs={logStream.logs.length}
+        />
+      }
+      topbar={
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-codex-400">CodexImmortal ecosystem</p>
+            <h1 className="mt-2 text-3xl font-semibold text-white">Agent Command Dashboard</h1>
+            <p className="mt-2 max-w-3xl text-sm text-slate-400">
+              A cohesive React and Tailwind CSS demo for agent lifecycle control and real-time task orchestration visibility.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard label="Total Agents" value={String(agentStore.agents.length)} />
+            <StatCard label="Active" value={String(agentStore.activeCount)} />
+            <StatCard label="Terminated" value={String(agentStore.terminatedCount)} />
+            <StatCard label="Live Logs" value={String(logStream.logs.length)} />
+          </div>
+        </div>
+      }
+      main={
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <AgentLifecyclePanel store={agentStore} />
+          <TaskLogPanel
+            logs={logStream.logs}
+            isConnected={logStream.isConnected}
+            isPaused={logStream.isPaused}
+            onTogglePause={logStream.togglePause}
+            onClear={logStream.clearLogs}
+          />
+        </div>
+      }
+    />
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="panel px-4 py-3">
+      <div className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+src/components/AgentLifecyclePanel.tsx
+import { useMemo } from 'react';
+import { useAgentStore } from '../hooks/useAgentStore';
+import { Agent } from '../types';
+
+interface AgentLifecyclePanelProps {
+  store: ReturnType<typeof useAgentStore>;
+}
+
+export function AgentLifecyclePanel({ store }: AgentLifecyclePanelProps) {
+  const sortedAgents = useMemo(
+    () => [...store.agents].sort((a, b) => a.name.localeCompare(b.name)),
+    [store.agents]
+  );
+
+  return (
+    <section className="grid gap-6">
+      <div className="panel p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-codex-400">Sidebar module</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Agent Lifecycle Management</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Local CRUD state for listing, creating, editing, and terminating agents.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-400">
+            Editing mode: <span className="text-white">{store.editingId ? 'enabled' : 'off'}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <label className="block">
+            <span className="mb-2 block text-xs uppercase tracking-[0.16em] text-slate-500">Agent name</span>
+            <input
+              className="input"
+              value={store.draft.name}
+              onChange={(e) => store.setDraft((current) => ({ ...current, name: e.target.value }))}
+              placeholder="Ex: Threat Intel Hunter"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-xs uppercase tracking-[0.16em] text-slate-500">Role</span>
+            <input
+              className="input"
+              value={store.draft.role}
+              onChange={(e) => store.setDraft((current) => ({ ...current, role: e.target.value }))}
+              placeholder="Ex: Hunt IOC drift across sources"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-xs uppercase tracking-[0.16em] text-slate-500">Authority</span>
+            <select
+              className="input"
+              value={store.draft.authority}
+              onChange={(e) =>
+                store.setDraft((current) => ({
+                  ...current,
+                  authority: e.target.value as Agent['authority'],
+                }))
+              }
+            >
+              <option>A0</option>
+              <option>A1</option>
+              <option>A2</option>
+              <option>A3</option>
+              <option>A4</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          {!store.editingId ? (
+            <button className="btn-primary" onClick={store.createAgent}>Add agent</button>
+          ) : (
+            <>
+              <button className="btn-primary" onClick={() => store.saveEdit()}>Save edits</button>
+              <button className="btn-secondary" onClick={store.cancelEdit}>Cancel</button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="panel overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <h3 className="text-lg font-semibold text-white">Agent registry</h3>
+          <span className="text-sm text-slate-500">{sortedAgents.length} records</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
+            <thead className="bg-slate-950/70 text-xs uppercase tracking-[0.18em] text-slate-500">
+              <tr>
+                <th className="px-5 py-3">Name</th>
+                <th className="px-5 py-3">Role</th>
+                <th className="px-5 py-3">Authority</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Last Seen</th>
+                <th className="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {sortedAgents.map((agent) => (
+                <tr key={agent.id} className="align-top hover:bg-slate-900/70">
+                  <td className="px-5 py-4 font-medium text-white">{agent.name}</td>
+                  <td className="px-5 py-4 text-slate-400">{agent.role}</td>
+                  <td className="px-5 py-4 text-slate-300">{agent.authority}</td>
+                  <td className="px-5 py-4">
+                    <StatusBadge status={agent.status} />
+                  </td>
+                  <td className="px-5 py-4 text-slate-500">{agent.lastSeen}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button className="btn-secondary" onClick={() => store.beginEdit(agent)}>Edit</button>
+                      <button className="btn-danger" onClick={() => store.terminateAgent(agent.id)}>Terminate</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatusBadge({ status }: { status: Agent['status'] }) {
+  const style = {
+    active: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    paused: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    terminated: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  }[status];
+
+  return <span className={`rounded-full border px-2.5 py-1 text-xs capitalize ${style}`}>{status}</span>;
+}
+
+src/components/DashboardLayout.tsx
+import { ReactNode } from 'react';
+
+interface DashboardLayoutProps {
+  sidebar: ReactNode;
+  topbar: ReactNode;
+  main: ReactNode;
+}
+
+export function DashboardLayout({ sidebar, topbar, main }: DashboardLayoutProps) {
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,151,0.12),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_100%)]">
+      <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[300px_1fr]">
+        <aside className="border-b border-slate-800 bg-slate-950/80 p-4 lg:border-b-0 lg:border-r lg:p-6">
+          {sidebar}
+        </aside>
+        <section className="flex min-w-0 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+          <header>{topbar}</header>
+          <main className="min-w-0">{main}</main>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+src/components/Sidebar.tsx
+interface SidebarProps {
+  activeCount: number;
+  terminatedCount: number;
+  totalLogs: number;
+}
+
+const navItems = [
+  'Agent Lifecycle Management',
+  'Task Orchestration Logs',
+  'Backend Connection Status',
+  'Registry and Policy View',
+];
+
+export function Sidebar({ activeCount, terminatedCount, totalLogs }: SidebarProps) {
+  return (
+    <div className="flex h-full flex-col gap-6">
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-codex-400 to-cyan-500 text-lg font-bold text-slate-950">
+            CI
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Private Warlab</p>
+            <h2 className="mt-1 text-xl font-semibold text-white">CodexImmortal</h2>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-slate-400">
+          Central operator surface for agent state, orchestration activity, and simulated runtime feedback.
+        </p>
+      </div>
+
+      <nav className="panel p-3">
+        <p className="px-3 pb-2 text-xs uppercase tracking-[0.18em] text-slate-500">Navigation</p>
+        <div className="space-y-1">
+          {navItems.map((item, index) => (
+            <div
+              key={item}
+              className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
+                index === 0 || index === 1 ? 'bg-slate-800 text-white' : 'text-slate-400'
+              }`}
+            >
+              <span>{item}</span>
+              <span className="text-xs text-slate-500">0{index + 1}</span>
+            </div>
+          ))}
+        </div>
+      </nav>
+
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+        <Metric label="Active Agents" value={activeCount} accent="text-emerald-400" />
+        <Metric label="Terminated" value={terminatedCount} accent="text-rose-400" />
+        <Metric label="Log Events" value={totalLogs} accent="text-cyan-400" />
+      </div>
+
+      <div className="panel mt-auto p-4">
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">State model</p>
+        <ul className="mt-3 space-y-2 text-sm text-slate-400">
+          <li>List and inspect mock agents.</li>
+          <li>Add new agents with authority level.</li>
+          <li>Edit existing entries with local state.</li>
+          <li>Terminate agents without removing history.</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value, accent }: { label: string; value: number; accent: string }) {
+  return (
+    <div className="panel p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold ${accent}`}>{value}</p>
+    </div>
+  );
+}
+
+src/components/TaskLogPanel.tsx
+import { useEffect, useMemo, useRef } from 'react';
+import { TaskLog } from '../types';
+
+interface TaskLogPanelProps {
+  logs: TaskLog[];
+  isConnected: boolean;
+  isPaused: boolean;
+  onTogglePause: () => void;
+  onClear: () => void;
+}
+
+export function TaskLogPanel({
+  logs,
+  isConnected,
+  isPaused,
+  onTogglePause,
+  onClear,
+}: TaskLogPanelProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.scrollTop = 0;
+  }, [logs]);
+
+  const counts = useMemo(() => {
+    return logs.reduce(
+      (acc, log) => {
+        acc[log.level] += 1;
+        return acc;
+      },
+      { info: 0, success: 0, warning: 0, error: 0 } as Record<TaskLog['level'], number>
+    );
+  }, [logs]);
+
+  return (
+    <section className="grid gap-6">
+      <div className="panel p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-cyan-400">Simulated WebSocket stream</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Task Orchestration Log</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Auto-scrolling updates demonstrate live UI behavior and state refresh cycles.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ConnectionBadge connected={isConnected} paused={isPaused} />
+            <button className="btn-secondary" onClick={onTogglePause}>{isPaused ? 'Resume stream' : 'Pause stream'}</button>
+            <button className="btn-secondary" onClick={onClear}>Clear logs</button>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Metric label="Info" value={counts.info} tone="text-sky-300" />
+          <Metric label="Success" value={counts.success} tone="text-emerald-300" />
+          <Metric label="Warnings" value={counts.warning} tone="text-amber-300" />
+          <Metric label="Errors" value={counts.error} tone="text-rose-300" />
+        </div>
+      </div>
+
+      <div className="panel overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <h3 className="text-lg font-semibold text-white">Live stream buffer</h3>
+          <span className="text-sm text-slate-500">Newest entries appear first</span>
+        </div>
+        <div ref={containerRef} className="max-h-[640px] overflow-y-auto px-5 py-4">
+          <div className="space-y-3">
+            {logs.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-950/70 p-8 text-center text-sm text-slate-500">
+                No task logs in buffer.
+              </div>
+            ) : (
+              logs.map((log) => <LogCard key={log.id} log={log} />)
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ConnectionBadge({ connected, paused }: { connected: boolean; paused: boolean }) {
+  const color = connected ? 'bg-emerald-400' : 'bg-amber-400';
+  const text = paused ? 'stream paused' : connected ? 'socket connected' : 'reconnecting';
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300">
+      <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function Metric({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</div>
+      <div className={`mt-2 text-2xl font-semibold ${tone}`}>{value}</div>
+    </div>
+  );
+}
+
+function LogCard({ log }: { log: TaskLog }) {
+  const tone = {
+    info: 'border-sky-500/20 bg-sky-500/8 text-sky-200',
+    success: 'border-emerald-500/20 bg-emerald-500/8 text-emerald-200',
+    warning: 'border-amber-500/20 bg-amber-500/8 text-amber-200',
+    error: 'border-rose-500/20 bg-rose-500/8 text-rose-200',
+  }[log.level];
+
+  return (
+    <article className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${tone}`}>
+              {log.level}
+            </span>
+            <span className="text-xs text-slate-500">{log.timestamp}</span>
+          </div>
+          <h4 className="mt-3 text-base font-semibold text-white">{log.task}</h4>
+          <p className="mt-2 text-sm text-slate-400">{log.detail}</p>
+        </div>
+        <div className="min-w-[160px] rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-400">
+          <div className="uppercase tracking-[0.16em] text-slate-500">Agent</div>
+          <div className="mt-1 text-sm text-white">{log.agentName}</div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+src/data/mockAgents.ts
+import { Agent } from '../types';
+
+export const mockAgents: Agent[] = [
+  {
+    id: 'agent-001',
+    name: 'Architectural Planner',
+    role: 'System design and dependency planning',
+    authority: 'A2',
+    status: 'active',
+    lastSeen: '2026-07-19 10:15 EDT',
+  },
+  {
+    id: 'agent-002',
+    name: 'Security Auditor',
+    role: 'Policy review and runtime hardening',
+    authority: 'A3',
+    status: 'active',
+    lastSeen: '2026-07-19 10:14 EDT',
+  },
+  {
+    id: 'agent-003',
+    name: 'Test-Driven Developer',
+    role: 'Unit tests, regression checks, and validation',
+    authority: 'A2',
+    status: 'paused',
+    lastSeen: '2026-07-19 10:08 EDT',
+  },
+  {
+    id: 'agent-004',
+    name: 'Documentation Architect',
+    role: 'Specs, runbooks, and release notes',
+    authority: 'A1',
+    status: 'terminated',
+    lastSeen: '2026-07-18 19:41 EDT',
+  },
+];
+
+src/data/mockTasks.ts
+export const taskNames = [
+  'Validate registry authority map',
+  'Hydrate mission state snapshot',
+  'Review agent permission changes',
+  'Compile frontend deployment artifact',
+  'Reconcile task queue after handoff',
+  'Stream telemetry to dashboard panel',
+  'Evaluate failover node heartbeat',
+  'Scan playbook execution summary',
+];
+
+export const taskDetails = [
+  'Execution routed through local MCP broker.',
+  'Human gate requirement checked against policy lane.',
+  'Write operation downgraded to draft-safe mode.',
+  'Task receipt indexed into local memory.',
+  'Queue depth fell below autoscale threshold.',
+  'Transient warning observed, retry scheduled.',
+  'Dependency graph updated after successful run.',
+  'Audit-friendly trace packet appended to buffer.',
+];
+
+src/hooks/useAgentStore.ts
+import { useMemo, useReducer, useState } from 'react';
+import { mockAgents } from '../data/mockAgents';
+import { Agent, AgentStatus } from '../types';
+
+type Draft = {
+  name: string;
+  role: string;
+  authority: Agent['authority'];
+};
+
+type Action =
+  | { type: 'add'; payload: Agent }
+  | { type: 'update'; payload: Agent }
+  | { type: 'terminate'; payload: { id: string } };
+
+function reducer(state: Agent[], action: Action): Agent[] {
+  switch (action.type) {
+    case 'add':
+      return [action.payload, ...state];
+    case 'update':
+      return state.map((agent) => (agent.id === action.payload.id ? action.payload : agent));
+    case 'terminate':
+      return state.map((agent) =>
+        agent.id === action.payload.id
+          ? { ...agent, status: 'terminated', lastSeen: nowStamp() }
+          : agent
+      );
+    default:
+      return state;
+  }
+}
+
+function nowStamp() {
+  return new Date().toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+function makeId() {
+  return `agent-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function useAgentStore() {
+  const [agents, dispatch] = useReducer(reducer, mockAgents);
+  const [draft, setDraft] = useState<Draft>({
+    name: '',
+    role: '',
+    authority: 'A1',
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const activeCount = useMemo(
+    () => agents.filter((agent) => agent.status === 'active').length,
+    [agents]
+  );
+  const terminatedCount = useMemo(
+    () => agents.filter((agent) => agent.status === 'terminated').length,
+    [agents]
+  );
+
+  function createAgent() {
+    if (!draft.name.trim() || !draft.role.trim()) return;
+    const next: Agent = {
+      id: makeId(),
+      name: draft.name.trim(),
+      role: draft.role.trim(),
+      authority: draft.authority,
+      status: 'active',
+      lastSeen: nowStamp(),
+    };
+    dispatch({ type: 'add', payload: next });
+    setDraft({ name: '', role: '', authority: 'A1' });
+  }
+
+  function beginEdit(agent: Agent) {
+    setEditingId(agent.id);
+    setDraft({
+      name: agent.name,
+      role: agent.role,
+      authority: agent.authority,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setDraft({ name: '', role: '', authority: 'A1' });
+  }
+
+  function saveEdit(status: AgentStatus = 'active') {
+    if (!editingId || !draft.name.trim() || !draft.role.trim()) return;
+    const current = agents.find((agent) => agent.id === editingId);
+    if (!current) return;
+    dispatch({
+      type: 'update',
+      payload: {
+        ...current,
+        name: draft.name.trim(),
+        role: draft.role.trim(),
+        authority: draft.authority,
+        status,
+        lastSeen: nowStamp(),
+      },
+    });
+    cancelEdit();
+  }
+
+  function terminateAgent(id: string) {
+    dispatch({ type: 'terminate', payload: { id } });
+    if (editingId === id) cancelEdit();
+  }
+
+  return {
+    agents,
+    draft,
+    setDraft,
+    editingId,
+    activeCount,
+    terminatedCount,
+    createAgent,
+    beginEdit,
+    cancelEdit,
+    saveEdit,
+    terminateAgent,
+  };
+}
+
+src/hooks/useSimulatedTaskStream.ts
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { taskDetails, taskNames } from '../data/mockTasks';
+import { Agent, TaskLog } from '../types';
+
+const levels: TaskLog['level'][] = ['info', 'success', 'warning', 'error'];
+
+function sample<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function makeLog(agents: Agent[]): TaskLog {
+  const eligible = agents.filter((agent) => agent.status !== 'terminated');
+  const fallback = agents[0];
+  const agent = eligible[Math.floor(Math.random() * Math.max(1, eligible.length))] || fallback;
+  const now = new Date();
+  return {
+    id: crypto.randomUUID(),
+    timestamp: now.toLocaleTimeString('en-US', { hour12: false }),
+    agentId: agent.id,
+    agentName: agent.name,
+    level: sample(levels),
+    task: sample(taskNames),
+    detail: sample(taskDetails),
+  };
+}
+
+export function useSimulatedTaskStream(agents: Agent[]) {
+  const [logs, setLogs] = useState<TaskLog[]>(() => [
+    {
+      id: crypto.randomUUID(),
+      timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+      agentId: 'boot',
+      agentName: 'MN-NET Control Plane',
+      level: 'success',
+      task: 'Initialize dashboard stream',
+      detail: 'Simulated WebSocket channel opened for orchestration logs.',
+    },
+  ]);
+  const [isPaused, setPaused] = useState(false);
+  const [isConnected, setConnected] = useState(true);
+  const tickRef = useRef<number | null>(null);
+  const heartbeatRef = useRef<number | null>(null);
+
+  const appendLog = useCallback(() => {
+    setLogs((current) => [makeLog(agents), ...current].slice(0, 120));
+  }, [agents]);
+
+  useEffect(() => {
+    if (isPaused) return;
+    tickRef.current = window.setInterval(() => {
+      appendLog();
+    }, 1700);
+    return () => {
+      if (tickRef.current) window.clearInterval(tickRef.current);
+    };
+  }, [appendLog, isPaused]);
+
+  useEffect(() => {
+    heartbeatRef.current = window.setInterval(() => {
+      setConnected((current) => current);
+    }, 4000);
+    return () => {
+      if (heartbeatRef.current) window.clearInterval(heartbeatRef.current);
+    };
+  }, []);
+
+  const togglePause = useCallback(() => {
+    setPaused((current) => !current);
+  }, []);
+
+  const clearLogs = useCallback(() => {
+    setLogs([]);
+  }, []);
+
+  const streamHealth = useMemo(() => (isConnected ? 'connected' : 'reconnecting'), [isConnected]);
+
+  return {
+    logs,
+    isPaused,
+    isConnected,
+    streamHealth,
+    togglePause,
+    clearLogs,
+  };
+}
+
+src/index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+.panel {
+  @apply rounded-2xl border border-slate-800 bg-slate-900/80 shadow-glow backdrop-blur;
+}
+
+.input {
+  @apply w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-codex-400;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition;
+}
+
+.btn-primary {
+  @apply btn bg-codex-500 text-slate-950 hover:bg-codex-400;
+}
+
+.btn-secondary {
+  @apply btn bg-slate-800 text-slate-100 hover:bg-slate-700;
+}
+
+.btn-danger {
+  @apply btn bg-rose-500/90 text-white hover:bg-rose-400;
+}
+
+src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+src/types.ts
+export type AgentStatus = 'active' | 'paused' | 'terminated';
+
+export interface Agent {
+  id: string;
+  name: string;
+  role: string;
+  authority: 'A0' | 'A1' | 'A2' | 'A3' | 'A4';
+  status: AgentStatus;
+  lastSeen: string;
+}
+
+export interface TaskLog {
+  id: string;
+  timestamp: string;
+  agentId: string;
+  agentName: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  task: string;
+  detail: string;
+}
+
+tailwind.config.cjs
+module.exports = {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        codex: {
+          50: '#effcfb',
+          100: '#d8f7f3',
+          400: '#22c7b8',
+          500: '#0ea597',
+          700: '#0f6d65',
+          900: '#0e2327'
+        }
+      },
+      boxShadow: {
+        glow: '0 0 0 1px rgba(34,199,184,0.15), 0 12px 40px rgba(2,12,18,0.35)'
+      }
+    }
+  },
+  plugins: [],
+};
+
+tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"],
+  "references": []
+}
+
+vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+  },
+});
