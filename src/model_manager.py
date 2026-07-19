@@ -2,6 +2,7 @@
 # CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 import requests
@@ -15,16 +16,35 @@ class ModelRoute:
 
 
 class ModelManager:
+    """
+    Selects inference backend (Ollama vs vLLM) and checks health.
+    """
+
     def __init__(self, ollama_url: str, vllm_url: str) -> None:
         self.ollama_url = ollama_url.rstrip("/")
         self.vllm_url = vllm_url.rstrip("/")
 
     def choose_backend(self, model_name: str) -> ModelRoute:
+        """
+        Simple heuristic: use vLLM for code/instruct models, otherwise Ollama.
+        """
         if "code" in model_name.lower() or "instruct" in model_name.lower():
-            return ModelRoute(model_name=model_name, backend="vllm", endpoint=self.vllm_url)
-        return ModelRoute(model_name=model_name, backend="ollama", endpoint=self.ollama_url)
+            return ModelRoute(
+                model_name=model_name,
+                backend="vllm",
+                endpoint=self.vllm_url,
+            )
+
+        return ModelRoute(
+            model_name=model_name,
+            backend="ollama",
+            endpoint=self.ollama_url,
+        )
 
     def health(self) -> dict[str, bool]:
+        """
+        Return basic health status for both backends.
+        """
         return {
             "ollama": self._ping(f"{self.ollama_url}/api/tags"),
             "vllm": self._ping(f"{self.vllm_url}/health"),
