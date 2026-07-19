@@ -1,0 +1,30 @@
+node:
+  name: beelink-ser3
+  role: private-ai-server
+  network_zone: tailscale
+
+network:
+  tailscale:
+    hostname: codex-ser3
+    admin_url: http://100.100.100.100
+    ssh_enabled: true
+
+models:
+  ollama:
+    base_url: http://127.0.0.1:11434
+    models:
+      - llama3.2
+      - mistral
+  vllm:
+    base_url: http://127.0.0.1:8000
+    models:
+      - codellama
+      - mistral-instruct
+
+services:
+  registry:
+    sqlite: /opt/codeximmortal/data/master_registry.db
+    vector_db: /opt/codeximmortal/data/vector_index
+  logs:
+    app: /opt/codeximmortal/logs/app.log
+    health: /opt/codeximmortal/logs/health.log
