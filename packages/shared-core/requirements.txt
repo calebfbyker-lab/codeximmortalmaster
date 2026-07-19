@@ -1,0 +1,5 @@
+# Core models, settings, logging
+pydantic>=2.6,<3.0
+python-dotenv>=1.0,<2.0
+loguru>=0.7,<0.8
+orjson>=3.9,<4.0
