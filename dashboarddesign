@@ -1,0 +1,582 @@
+## 1. React + Tailwind dashboard UI
+
+### Tailwind and app bootstrap
+
+```ts
+// tailwind.config.cjs
+module.exports = {
+  content: [
+    './index.html',
+    './src/**/*.{js,jsx,ts,tsx}',
+  ],
+  theme: { extend: {} },
+  plugins: [],
+};
+```
+
+```ts
+// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import { DashboardShell } from './DashboardShell';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <DashboardShell />
+  </React.StrictMode>
+);
+```
+
+```css
+// src/index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+```
+
+### Dashboard shell with sidebar
+
+```tsx
+// src/DashboardShell.tsx
+import React, { useState } from 'react';
+import { AgentPanel } from './panels/AgentPanel';
+import { TaskPanel } from './panels/TaskPanel';
+import { PlatformPanel } from './panels/PlatformPanel';
+
+const tabs = [
+  { id: 'agents', label: 'Agent lifecycle' },
+  { id: 'tasks', label: 'Task orchestration' },
+  { id: 'platform', label: 'Platform & clusters' },
+];
+
+export function DashboardShell() {
+  const [active, setActive] = useState<'agents' | 'tasks' | 'platform'>('agents');
+
+  return (
+    <div className="min-h-screen flex">
+      <aside className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center">
+            <span className="text-white font-bold text-xl">CI</span>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">CodexImmortal</p>
+            <h1 className="text-lg font-semibold">Agent Control Center</h1>
+          </div>
+        </div>
+        <nav className="space-y-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActive(t.id as any)}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition border
+               ${active === t.id
+                 ? 'bg-slate-800 border-slate-700 text-slate-50'
+                 : 'bg-slate-900 border-slate-900 text-slate-400 hover:bg-slate-800 hover:border-slate-700'}`}
+            >
+              <span>{t.label}</span>
+              <span className="text-[11px] text-slate-500">0{tabs.indexOf(t) + 1}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="mt-auto space-y-2 text-xs text-slate-400">
+          <p>Backend → Frontend status</p>
+          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div className="h-full w-3/4 bg-gradient-to-r from-teal-500 via-sky-500 to-emerald-400" />
+          </div>
+          <p className="text-[11px]">
+            Cluster: kubernetes-war-lab · RLS: enabled · OAuth2: active
+          </p>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-6 space-y-4">
+        {active === 'agents' && <AgentPanel />}
+        {active === 'tasks' && <TaskPanel />}
+        {active === 'platform' && <PlatformPanel />}
+      </main>
+    </div>
+  );
+}
+```
+
+### Agent lifecycle panel
+
+```tsx
+// src/panels/AgentPanel.tsx
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
+
+export function AgentPanel() {
+  const [agents, setAgents] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.get('/agents').then((res) => setAgents(res.data));
+  }, []);
+
+  return (
+    <section className="space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Agent lifecycle</h2>
+          <p className="text-sm text-slate-400">
+            Create, update, and retire CodexImmortal agents across tenants.
+          </p>
+        </div>
+        <button className="px-3 py-2 rounded-xl bg-teal-500 text-sm font-semibold text-slate-950">
+          New agent
+        </button>
+      </header>
+      <div className="grid grid-cols-3 gap-4">
+        {agents.map((agent) => (
+          <article
+            key={agent.id}
+            className="rounded-2xl border border-slate-800 bg-slate-900 p-4 flex flex-col gap-2"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">{agent.name}</h3>
+              <span className="text-[11px] px-2 py-1 rounded-full bg-slate-800 text-slate-300">
+                {agent.authority}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">{agent.role}</p>
+            <p className="text-[11px] text-slate-500">Tenant: {agent.tenant_name}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+### Task orchestration logs
+
+```tsx
+// src/panels/TaskPanel.tsx
+import React, { useEffect, useState } from 'react';
+import { api } from '../services/api';
+
+export function TaskPanel() {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.get('/tasks').then((res) => setTasks(res.data));
+    api.get('/logs/orchestration').then((res) => setLogs(res.data));
+  }, []);
+
+  return (
+    <section className="space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Task orchestration</h2>
+          <p className="text-sm text-slate-400">
+            Observe agent task routing, retries, and completion.
+          </p>
+        </div>
+      </header>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-2">Queue</h3>
+          <div className="space-y-2 text-xs">
+            {tasks.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between border border-slate-800 rounded-xl px-2 py-1"
+              >
+                <span>{t.name}</span>
+                <span className="text-[11px] text-slate-400">{t.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-2">Orchestration logs</h3>
+          <div className="h-64 overflow-y-auto font-mono text-[11px] bg-slate-950 rounded-xl p-2">
+            {logs.map((line, idx) => (
+              <p key={idx} className="text-teal-300">
+                {line}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+```
+
+### Platform & cluster status
+
+```tsx
+// src/panels/PlatformPanel.tsx
+import React, { useEffect, useState } from 'react';
+import { api } from '../services/api';
+
+export function PlatformPanel() {
+  const [clusters, setClusters] = useState<any[]>([]);
+  const [rlsEnabled, setRlsEnabled] = useState(false);
+  const [oauthStatus, setOauthStatus] = useState<'active' | 'disabled'>('active');
+
+  useEffect(() => {
+    api.get('/platform/clusters').then((res) => setClusters(res.data));
+    api.get('/platform/security').then((res) => {
+      setRlsEnabled(res.data.rlsEnabled);
+      setOauthStatus(res.data.oauthStatus);
+    });
+  }, []);
+
+  return (
+    <section className="space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Platform & Kubernetes clusters</h2>
+          <p className="text-sm text-slate-400">
+            PostgreSQL RLS, OAuth2, and agent deployment pipelines.
+          </p>
+        </div>
+      </header>
+      <div className="grid grid-cols-3 gap-4">
+        <article className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-1">PostgreSQL multi-tenancy</h3>
+          <p className="text-xs text-slate-400 mb-2">Row Level Security for tenant isolation.</p>
+          <p className="text-[11px]">
+            Status:{' '}
+            <span className="font-semibold">
+              {rlsEnabled ? 'RLS enabled' : 'RLS disabled'}
+            </span>
+          </p>
+        </article>
+        <article className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-1">OAuth2 authentication</h3>
+          <p className="text-xs text-slate-400 mb-2">Agent UI served behind OAuth2 scopes.</p>
+          <p className="text-[11px]">Status: {oauthStatus}</p>
+        </article>
+        <article className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-1">Kubernetes agent clusters</h3>
+          <p className="text-xs text-slate-400 mb-2">Deployment pipeline monitors and scaling.</p>
+          <div className="space-y-1 text-[11px]">
+            {clusters.map((c) => (
+              <p key={c.name}>
+                {c.name}: {c.replicas} pods · status {c.status}
+              </p>
+            ))}
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+```
+
+### API client wrapper
+
+```ts
+// src/services/api.ts
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
+});
+```
+
+***
+
+## 2. API gateway with OAuth2 and RLS
+
+These snippets show a Node/Express gateway that attaches tenant context for PostgreSQL RLS as recommended in multi-tenant patterns [1][2][3][4].
+
+```ts
+// server/index.ts
+import express from 'express';
+import session from 'express-session';
+import { authMiddleware } from './middleware/auth';
+import { attachTenantContext } from './middleware/tenant';
+import { agentRouter } from './routes/agents';
+import { taskRouter } from './routes/tasks';
+import { platformRouter } from './routes/platform';
+
+const app = express();
+app.use(express.json());
+app.use(
+  session({
+    secret: 'codeximmortal',
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+// OAuth2 is assumed to populate req.session.user and scopes
+app.use('/api', authMiddleware, attachTenantContext);
+app.use('/api/agents', agentRouter);
+app.use('/api/tasks', taskRouter);
+app.use('/api/platform', platformRouter);
+
+app.listen(8080, () => {
+  console.log('CodexImmortal API gateway listening on :8080');
+});
+```
+
+```ts
+// server/middleware/auth.ts
+import { Request, Response, NextFunction } from 'express';
+
+export async function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'unauthenticated' });
+  }
+  // Additional scope checks could go here
+  next();
+}
+```
+
+```ts
+// server/middleware/tenant.ts
+import { Request, Response, NextFunction } from 'express';
+import { pool } from '../pg';
+
+export async function attachTenantContext(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const tenantId = req.session.user?.tenantId;
+  if (!tenantId) {
+    return res.status(400).json({ error: 'tenant context missing' });
+  }
+  // Set the PostgreSQL config parameter used by RLS policies
+  await pool.query('SET app.current_tenant = $1', [tenantId]);
+  next();
+}
+```
+
+```ts
+// server/pg.ts
+import { Pool } from 'pg';
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+```
+
+```ts
+// server/routes/agents.ts
+import { Router } from 'express';
+import { pool } from '../pg';
+
+export const agentRouter = Router();
+
+agentRouter.get('/', async (_req, res) => {
+  const { rows } = await pool.query(
+    'SELECT id, name, role, authority, tenant_name FROM agents_view'
+  );
+  res.json(rows);
+});
+```
+
+Task and platform routes follow the same pattern, querying RLS-protected tables or views.
+
+***
+
+## 3. PostgreSQL RLS schema for multi-tenancy
+
+This schema matches common RLS patterns where tenant isolation is enforced by a policy using `current_setting('app.current_tenant')` [2][3][4].
+
+```sql
+-- Tenants
+CREATE TABLE tenant (
+  id   INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+-- Agents tied to a tenant
+CREATE TABLE agent (
+  id         SERIAL PRIMARY KEY,
+  tenant_id  INTEGER NOT NULL REFERENCES tenant(id),
+  name       TEXT NOT NULL,
+  role       TEXT NOT NULL,
+  authority  TEXT NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE agent ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_policy
+ON agent
+USING (tenant_id = current_setting('app.current_tenant')::INTEGER);
+
+-- View for UI
+CREATE VIEW agents_view AS
+SELECT a.id,
+       a.name,
+       a.role,
+       a.authority,
+       t.name AS tenant_name
+FROM agent a
+JOIN tenant t ON t.id = a.tenant_id;
+```
+
+***
+
+## 4. Kubernetes deployment and scaling
+
+These configs define deployments and services for the dashboard, API gateway, and agent server, plus an HPA for autoscaling [7][8].
+
+```yaml
+# k8s/api-gateway-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codeximmortal-api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: codeximmortal-api-gateway
+  template:
+    metadata:
+      labels:
+        app: codeximmortal-api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: codeximmortal/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: codeximmortal-db-secret
+                  key: url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codeximmortal-api-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: codeximmortal-api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+```
+
+```yaml
+# k8s/dashboard-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codeximmortal-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codeximmortal-dashboard
+  template:
+    metadata:
+      labels:
+        app: codeximmortal-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: codeximmortal/dashboard:latest
+          ports:
+            - containerPort: 4173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codeximmortal-dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: codeximmortal-dashboard
+  ports:
+    - port: 80
+      targetPort: 4173
+```
+
+```yaml
+# k8s/agent-server-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codeximmortal-agent-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: codeximmortal-agent-server
+  template:
+    metadata:
+      labels:
+        app: codeximmortal-agent-server
+    spec:
+      containers:
+        - name: agent-server
+          image: codeximmortal/agent-server:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: codeximmortal-db-secret
+                  key: url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codeximmortal-agent-server
+spec:
+  type: ClusterIP
+  selector:
+    app: codeximmortal-agent-server
+  ports:
+    - port: 9000
+      targetPort: 9000
+```
+
+```yaml
+# k8s/hpa-agent-server.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: codeximmortal-agent-server-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: codeximmortal-agent-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+```
+
+
+
