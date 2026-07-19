@@ -10,6 +10,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """
+    Centralized configuration for the CodexImmortal private server.
+
+    Environment variables are prefixed with CODEX_ by default, for example:
+    - CODEX_ENVIRONMENT=dev
+    - CODEX_OLLAMA_BASE_URL=http://127.0.0.1:11434
+    """
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="CODEX_",
@@ -45,4 +53,7 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    """
+    Return a cached Settings instance so configuration is loaded once.
+    """
     return Settings()
