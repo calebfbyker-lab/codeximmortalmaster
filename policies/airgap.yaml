@@ -1,0 +1,18 @@
+ringname: airgap
+sensitivity: TOP_SECRET
+replication:
+  factor: 3
+  strategy: threshold-3-of-5
+  geozones: ["airgap-east", "airgap-west"]
+encryption:
+  algorithm: ML-KEM-1024-envelope
+  key_id: airgap-ring-key
+  rotation_cron: "0 0 1 * *"
+accesscontrol:
+  roles: ["commander", "system"]
+  timewindows: []
+  georestrictions: ["airgap-east", "airgap-west"]
+retention:
+  default_days: 3650
+  legal_hold_days: 365
+  destruction_method: crypto-erasure
