@@ -1,0 +1,18 @@
+ringname: hot
+sensitivity: UNCLASSIFIED
+replication:
+  factor: 2
+  strategy: mirrored
+  geozones: ["us-east", "us-central"]
+encryption:
+  algorithm: ML-KEM-1024-envelope
+  key_id: hot-ring-key
+  rotation_cron: "0 0 * * *"
+accesscontrol:
+  roles: ["operator", "system"]
+  timewindows: []
+  georestrictions: ["us-east", "us-central"]
+retention:
+  default_days: 30
+  legal_hold_days: 0
+  destruction_method: crypto-erasure
