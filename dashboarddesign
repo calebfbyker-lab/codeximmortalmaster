@@ -578,5 +578,427 @@ spec:
           averageUtilization: 70
 ```
 
+# CodexImmortal React + Tailwind MCP Dashboard Codebase
+
+This file contains a minimal but complete front-end codebase for a React + Tailwind dashboard
+with:
+- Sidebar navigation
+- Agent lifecycle CRUD
+- Task orchestration log view with real-time WebSocket updates
+- API connection module for HTTP + WebSocket to a backend MCP server
+- A custom hook for backend connectivity status and reconnection logic
+
+## 1. Project bootstrap
+
+### package.json (excerpt)
+
+{
+  "name": "codeximmortal-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}
+
+### tailwind.config.cjs
+
+module.exports = {
+  content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
+  theme: { extend: {} },
+  plugins: [],
+};
+
+### src/index.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+## 2. Root entry and shell
+
+### src/main.tsx
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import { DashboardShell } from './DashboardShell';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <DashboardShell />
+  </React.StrictMode>
+);
+
+### src/DashboardShell.tsx
+
+import React, { useState } from 'react';
+import { AgentPanel } from './panels/AgentPanel';
+import { TaskPanel } from './panels/TaskPanel';
+import { ConnectivityBadge } from './components/ConnectivityBadge';
+
+const tabs = [
+  { id: 'agents', label: 'Agent lifecycle' },
+  { id: 'tasks', label: 'Task orchestration logs' },
+];
+
+export function DashboardShell() {
+  const [active, setActive] = useState<'agents' | 'tasks'>('agents');
+
+  return (
+    <div className="min-h-screen flex">
+      <aside className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center">
+            <span className="text-white font-bold text-xl">CI</span>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">CodexImmortal</p>
+            <h1 className="text-lg font-semibold">MCP Agent Dashboard</h1>
+          </div>
+        </div>
+
+        <nav className="space-y-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActive(t.id as any)}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition border
+              ${active === t.id
+                ? 'bg-slate-800 border-slate-700 text-slate-50'
+                : 'bg-slate-900 border-slate-900 text-slate-400 hover:bg-slate-800 hover:border-slate-700'}`}
+            >
+              <span>{t.label}</span>
+              <span className="text-[11px] text-slate-500">0{tabs.indexOf(t) + 1}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-auto space-y-3 text-xs text-slate-400">
+          <ConnectivityBadge />
+          <p className="text-[11px]">Backend MCP server · WebSocket + HTTP</p>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-6 space-y-4">
+        {active === 'agents' && <AgentPanel />}
+        {active === 'tasks' && <TaskPanel />}
+      </main>
+    </div>
+  );
+}
+
+## 3. API connection module
+
+### src/services/api.ts
+
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
+});
+
+## 4. WebSocket connectivity hook
+
+This hook tracks connectivity status and implements simple reconnection logic inspired by common React WebSocket practices [web:379][web:380][web:381].
+
+### src/hooks/useMcpSocket.ts
+
+import { useEffect, useRef, useState } from 'react';
+
+export type SocketStatus = 'connecting' | 'open' | 'closed' | 'error';
+
+interface UseMcpSocketOptions {
+  url: string;
+}
+
+export function useMcpSocket({ url }: UseMcpSocketOptions) {
+  const [status, setStatus] = useState<SocketStatus>('connecting');
+  const [messages, setMessages] = useState<string[]>([]);
+  const reconnectAttempts = useRef(0);
+  const socketRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    function connect() {
+      setStatus('connecting');
+      const ws = new WebSocket(url);
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        if (!isMounted) return;
+        reconnectAttempts.current = 0;
+        setStatus('open');
+      };
+
+      ws.onmessage = (event) => {
+        if (!isMounted) return;
+        setMessages((prev) => [event.data, ...prev].slice(0, 200));
+      };
+
+      ws.onerror = () => {
+        if (!isMounted) return;
+        setStatus('error');
+      };
+
+      ws.onclose = () => {
+        if (!isMounted) return;
+        setStatus('closed');
+        // Simple reconnection with backoff
+        reconnectAttempts.current += 1;
+        const delay = Math.min(10000, 1000 * reconnectAttempts.current);
+        setTimeout(() => {
+          if (isMounted) connect();
+        }, delay);
+      };
+    }
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.close();
+      }
+    };
+  }, [url]);
+
+  function send(message: string) {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(message);
+    }
+  }
+
+  return { status, messages, send };
+}
+
+## 5. Connectivity badge component
+
+### src/components/ConnectivityBadge.tsx
+
+import React from 'react';
+import { useMcpSocket } from '../hooks/useMcpSocket';
+
+export function ConnectivityBadge() {
+  const { status } = useMcpSocket({ url: 'wss://localhost:9000/mcp' });
+
+  const label =
+    status === 'open'
+      ? 'Connected to MCP server'
+      : status === 'connecting'
+      ? 'Connecting…'
+      : status === 'error'
+      ? 'Error · reconnecting'
+      : 'Disconnected · retrying';
+
+  const colorClass =
+    status === 'open'
+      ? 'bg-emerald-500'
+      : status === 'connecting'
+      ? 'bg-sky-500'
+      : status === 'error'
+      ? 'bg-amber-500'
+      : 'bg-rose-500';
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`h-2 w-2 rounded-full ${colorClass}`} />
+      <span className="text-[11px]">{label}</span>
+    </div>
+  );
+}
+
+## 6. Agent lifecycle panel with CRUD
+
+### src/panels/AgentPanel.tsx
+
+import React, { useEffect, useState } from 'react';
+import { api } from '../services/api';
+
+interface Agent {
+  id: number;
+  name: string;
+  role: string;
+  authority: string;
+}
+
+export function AgentPanel() {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [draft, setDraft] = useState<Partial<Agent>>({});
+
+  async function loadAgents() {
+    const res = await api.get('/agents');
+    setAgents(res.data);
+  }
+
+  useEffect(() => {
+    loadAgents();
+  }, []);
+
+  async function createAgent() {
+    const res = await api.post('/agents', draft);
+    setAgents((prev) => [res.data, ...prev]);
+    setDraft({});
+  }
+
+  async function updateAgent(id: number) {
+    const agent = agents.find((a) => a.id === id);
+    if (!agent) return;
+    const res = await api.put(`/agents/${id}`, agent);
+    setAgents((prev) => prev.map((a) => (a.id === id ? res.data : a)));
+  }
+
+  async function deleteAgent(id: number) {
+    await api.delete(`/agents/${id}`);
+    setAgents((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  return (
+    <section className="space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Agent lifecycle</h2>
+          <p className="text-sm text-slate-400">
+            Manage CodexImmortal agents: create, update, retire.
+          </p>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-1 rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+          <h3 className="text-sm font-semibold">New agent</h3>
+          <div className="space-y-2 text-xs">
+            <input
+              className="w-full rounded-lg bg-slate-950 border border-slate-800 px-2 py-1"
+              placeholder="Name"
+              value={draft.name ?? ''}
+              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+            />
+            <input
+              className="w-full rounded-lg bg-slate-950 border border-slate-800 px-2 py-1"
+              placeholder="Role"
+              value={draft.role ?? ''}
+              onChange={(e) => setDraft((d) => ({ ...d, role: e.target.value }))}
+            />
+            <input
+              className="w-full rounded-lg bg-slate-950 border border-slate-800 px-2 py-1"
+              placeholder="Authority (A0–A4)"
+              value={draft.authority ?? ''}
+              onChange={(e) => setDraft((d) => ({ ...d, authority: e.target.value }))}
+            />
+            <button
+              onClick={createAgent}
+              className="mt-2 px-3 py-1 rounded-lg bg-teal-500 text-[12px] font-semibold text-slate-950"
+            >
+              Create agent
+            </button>
+          </div>
+        </div>
+
+        <div className="col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-2">Agents</h3>
+          <div className="space-y-2 text-xs">
+            {agents.map((agent) => (
+              <div
+                key={agent.id}
+                className="flex items-center justify-between rounded-xl border border-slate-800 px-2 py-1"
+              >
+                <div>
+                  <p className="font-semibold text-[12px]">{agent.name}</p>
+                  <p className="text-[11px] text-slate-400">{agent.role}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] px-2 py-1 rounded-full bg-slate-800 text-slate-300">
+                    {agent.authority}
+                  </span>
+                  <button
+                    onClick={() => updateAgent(agent.id)}
+                    className="px-2 py-1 rounded-lg bg-sky-500 text-[11px] text-slate-950"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => deleteAgent(agent.id)}
+                    className="px-2 py-1 rounded-lg bg-rose-500 text-[11px] text-slate-950"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+## 7. Task orchestration log view with real-time updates
+
+### src/panels/TaskPanel.tsx
+
+import React from 'react';
+import { useMcpSocket } from '../hooks/useMcpSocket';
+
+export function TaskPanel() {
+  const { status, messages } = useMcpSocket({ url: 'wss://localhost:9000/mcp/logs' });
+
+  return (
+    <section className="space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Task orchestration logs</h2>
+          <p className="text-sm text-slate-400">
+            Real-time view of MCP agent task routing and completion.
+          </p>
+        </div>
+        <span className="text-[11px] text-slate-400">WebSocket: {status}</span>
+      </header>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-2">Live log stream</h3>
+          <div className="h-64 overflow-y-auto font-mono text-[11px] bg-slate-950 rounded-xl p-2">
+            {messages.map((line, idx) => (
+              <p key={idx} className="text-teal-300">
+                {line}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 className="text-sm font-semibold mb-2">Summary</h3>
+          <p className="text-xs text-slate-400">
+            This panel subscribes to the MCP backend log channel and updates as agents
+            start tasks, complete runs, or encounter policy blocks.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 
