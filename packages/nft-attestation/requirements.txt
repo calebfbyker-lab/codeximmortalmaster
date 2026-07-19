@@ -1,0 +1,6 @@
+# NFT metadata, minting, custody
+pydantic>=2.6,<3.0
+orjson>=3.9,<4.0
+web3>=6.0,<7.0                # ethers/web3 style client
+eth-account>=0.9,<1.0
+ipfshttpclient>=0.8,<1.0
