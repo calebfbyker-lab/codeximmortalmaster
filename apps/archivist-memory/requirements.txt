@@ -1,0 +1,9 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.30,<0.31
+pydantic>=2.6,<3.0
+networkx>=3.2,<4.0
+neo4j>=5.0,<6.0           # if you use Neo4j as persistent graph
+faiss-cpu>=1.8,<2.0
+sentence-transformers>=3.0,<4.0
+opentelemetry-api>=1.26,<2.0
+opentelemetry-sdk>=1.26,<2.0
