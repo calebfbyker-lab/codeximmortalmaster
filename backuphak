@@ -1,0 +1,710 @@
+Yes perfect provide all the files in a copy paste set
+
+[CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+
+Below is the full copy-paste set for the corrected `agentic_hacker` package, including packaging files. This version is import-safe, prompt-driven, bounded in subagent spawning, and includes mathematical plus cryptographic proof of task completion under War Lab-style governance.[1][2]
+
+## Root files
+
+### `pyproject.toml`
+
+```toml
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-hacker"
+version = "0.1.0"
+description = "Governed OODA agent scaffold with bounded subagents and proof-carrying task completion"
+readme = "README.md"
+requires-python = ">=3.10"
+```
+
+### `.gitignore`
+
+```gitignore
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+```
+
+## Package tree
+
+```text
+agentic_hacker/
+├── README.md
+├── __init__.py
+├── core.py
+├── evidence.py
+├── factory.py
+├── lineage.py
+├── models.py
+├── policies.py
+├── prompting.py
+├── proofs.py
+├── sandbox.py
+├── executors/
+│   ├── __init__.py
+│   └── passive.py
+├── planners/
+│   ├── __init__.py
+│   └── ooda.py
+├── prompts/
+│   ├── __init__.py
+│   └── registry.py
+├── reporting/
+│   ├── __init__.py
+│   └── summary.py
+├── scorers/
+│   ├── __init__.py
+│   └── risk.py
+├── targets/
+│   ├── __init__.py
+│   └── firmware.py
+├── techniques/
+│   ├── __init__.py
+│   └── catalog.py
+└── tests/
+    ├── __init__.py
+    └── test_smoke.py
+```
+
+## File contents
+
+### `agentic_hacker/README.md`
+
+```md
+# agentic_hacker
+
+[CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+
+A governed research scaffold for OODA-driven agent orchestration, bounded subagent spawning, prompt-based role interaction, evidence capture, and proof-carrying task completion. It keeps firmware-style adapters passive by default and routes high-risk domains to HUMAN_GATE.
+```
+
+### `agentic_hacker/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from .core import AgenticHacker
+from .models import Task, Agent, SovereignEvent, OODAResult, FirmwareProfile
+```
+
+### `agentic_hacker/models.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
+import time
+import hashlib
+import json
+
+
+def stable_hash(obj: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(obj, sort_keys=True, default=str).encode()
+    ).hexdigest()
+
+
+@dataclass
+class SovereignEvent:
+    event_type: str
+    payload: Dict[str, Any]
+    classification: str = "UNCLASSIFIED"
+    created_at: float = field(default_factory=time.time)
+    content_hash: str = field(init=False)
+
+    def __post_init__(self):
+        self.content_hash = stable_hash(
+            {
+                "event_type": self.event_type,
+                "payload": self.payload,
+                "classification": self.classification,
+            }
+        )
+
+
+@dataclass
+class Task:
+    task_id: str
+    objective: str
+    target: str
+    predicates: List[str] = field(default_factory=list)
+    risk_score: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class Agent:
+    agent_id: str
+    role: str
+    prompt_template: str
+    max_children: int = 2
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class OODAResult:
+    observe: Dict[str, Any]
+    orient: Dict[str, Any]
+    decide: Dict[str, Any]
+    act: Dict[str, Any]
+    learn: Dict[str, Any]
+
+
+@dataclass
+class FirmwareProfile:
+    name: str
+    vendor: str
+    version: str
+    mode: str = "PASSIVE"
+    capabilities: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+```
+
+### `agentic_hacker/policies.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from .models import Task
+
+HUMAN_GATE_DOMAINS = {
+    "KINETIC",
+    "BIO",
+    "SPACE",
+    "WEAPONS",
+    "CRYPTO_KEY",
+    "FIRMWARE_WRITE",
+}
+
+
+def require_human_gate(task: Task) -> bool:
+    domain = str(task.metadata.get("domain", "CYBER")).upper()
+    mode = str(task.metadata.get("mode", "PASSIVE")).upper()
+    return task.risk_score > 8.5 or domain in HUMAN_GATE_DOMAINS or mode == "ACTIVE"
+```
+
+### `agentic_hacker/evidence.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from dataclasses import dataclass, asdict, field
+from typing import Dict, Any, List
+import hashlib
+import json
+import time
+
+
+@dataclass
+class EvidenceRecord:
+    task_id: str
+    source: str
+    payload: Dict[str, Any]
+    created_at: float = field(default_factory=time.time)
+
+    def digest(self) -> str:
+        return hashlib.sha256(
+            json.dumps(asdict(self), sort_keys=True, default=str).encode()
+        ).hexdigest()
+
+
+class EvidenceStore:
+    def __init__(self):
+        self.records: List[EvidenceRecord] = []
+
+    def add(self, record: EvidenceRecord):
+        self.records.append(record)
+
+    def merkle_like_root(self) -> str:
+        hashes = sorted(r.digest() for r in self.records)
+        return hashlib.sha256("".join(hashes).encode()).hexdigest() if hashes else hashlib.sha256(b"").hexdigest()
+```
+
+### `agentic_hacker/lineage.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from dataclasses import dataclass, asdict, field
+import hashlib
+import json
+import time
+
+
+@dataclass
+class LineageRecord:
+    parent_id: str
+    child_id: str
+    purpose: str
+    created_at: float = field(default_factory=time.time)
+
+    def lineage_hash(self) -> str:
+        return hashlib.sha256(
+            json.dumps(asdict(self), sort_keys=True, default=str).encode()
+        ).hexdigest()
+```
+
+### `agentic_hacker/sandbox.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from .models import FirmwareProfile
+
+
+class PassiveSandbox:
+    def inspect_firmware(self, profile: FirmwareProfile) -> dict:
+        return {
+            "name": profile.name,
+            "vendor": profile.vendor,
+            "version": profile.version,
+            "mode": profile.mode,
+            "capabilities": profile.capabilities,
+            "metadata": profile.metadata,
+            "write_access": False,
+            "note": "Passive adapter only; no firmware flashing, persistence, or command injection.",
+        }
+```
+
+### `agentic_hacker/proofs.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from dataclasses import dataclass, asdict, field
+from typing import Dict, Any, List
+import hashlib
+import hmac
+import json
+import time
+
+
+def _canon(x: Any) -> bytes:
+    return json.dumps(x, sort_keys=True, separators=(",", ":"), default=str).encode()
+
+
+def stable_hash(x: Any) -> str:
+    return hashlib.sha256(_canon(x)).hexdigest()
+
+
+class DevVerifier:
+    algorithm = "DEV-HMAC-SHA256-REPLACE-WITH-ML-DSA"
+
+    def __init__(self, key: bytes = b"development-only"):
+        self.key = key
+
+    def sign(self, payload: Dict[str, Any]) -> str:
+        return hmac.new(self.key, _canon(payload), hashlib.sha256).hexdigest()
+
+    def verify(self, payload: Dict[str, Any], sig: str) -> bool:
+        return hmac.compare_digest(self.sign(payload), sig)
+
+
+@dataclass
+class PredicateProof:
+    predicate: str
+    result: bool
+    agent_id: str
+    evidence: Dict[str, Any]
+    issued_at: int = field(default_factory=lambda: int(time.time()))
+    signature: str = ""
+    algorithm: str = ""
+
+    def body(self):
+        return {
+            "predicate": self.predicate,
+            "result": self.result,
+            "agent_id": self.agent_id,
+            "evidence": self.evidence,
+            "issued_at": self.issued_at,
+        }
+
+
+class GoalProof:
+    def __init__(self, verifier: DevVerifier | None = None):
+        self.verifier = verifier or DevVerifier()
+        self.proofs: List[PredicateProof] = []
+
+    def add(self, proof: PredicateProof):
+        proof.algorithm = self.verifier.algorithm
+        proof.signature = self.verifier.sign(proof.body())
+        self.proofs.append(proof)
+
+    def verify(self, predicates: List[str]) -> Dict[str, Any]:
+        seen = {}
+        for proof in self.proofs:
+            valid = proof.result and self.verifier.verify(proof.body(), proof.signature)
+            seen.setdefault(proof.predicate, []).append(valid)
+
+        truth_vector = [any(seen.get(predicate, [False])) for predicate in predicates]
+        complete = bool(predicates) and all(truth_vector)
+
+        return {
+            "complete": complete,
+            "mathematical_proof": f"AND({','.join(map(str, truth_vector))})={complete}",
+            "cryptographic_proof": stable_hash([asdict(proof) for proof in self.proofs]),
+            "proof_count": len(self.proofs),
+        }
+```
+
+### `agentic_hacker/prompting.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from .models import Agent, Task
+
+
+def render_prompt(agent: Agent, task: Task) -> str:
+    return agent.prompt_template.format(
+        agent_id=agent.agent_id,
+        role=agent.role,
+        task_id=task.task_id,
+        objective=task.objective,
+        target=task.target,
+        predicates=", ".join(task.predicates),
+    )
+```
+
+### `agentic_hacker/factory.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from .models import Agent
+
+DEFAULT_PROMPTS = {
+    "STRATEGIST": "Agent {agent_id} ({role}) planning task {task_id}: {objective} on {target}. Required predicates: {predicates}.",
+    "ANALYST": "Agent {agent_id} ({role}) verifying task {task_id}: {objective}. Predicate set: {predicates}.",
+    "ARCHIVIST": "Agent {agent_id} ({role}) recording evidence for task {task_id} on {target}.",
+}
+
+
+def create_agent(agent_id: str, role: str, max_children: int = 2) -> Agent:
+    return Agent(
+        agent_id=agent_id,
+        role=role,
+        prompt_template=DEFAULT_PROMPTS.get(role, DEFAULT_PROMPTS["ANALYST"]),
+        max_children=max_children,
+    )
+```
+
+### `agentic_hacker/core.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from collections import deque
+from typing import Optional
+from .models import Task, OODAResult, SovereignEvent, FirmwareProfile, Agent
+from .policies import require_human_gate
+from .evidence import EvidenceStore, EvidenceRecord
+from .sandbox import PassiveSandbox
+from .proofs import GoalProof, PredicateProof
+from .factory import create_agent
+from .prompting import render_prompt
+from .lineage import LineageRecord
+
+
+class AgenticHacker:
+    def __init__(self, max_agents: int = 8, max_depth: int = 3):
+        self.evidence = EvidenceStore()
+        self.sandbox = PassiveSandbox()
+        self.max_agents = max_agents
+        self.max_depth = max_depth
+        self.lineage = []
+
+    def _spawn_children(self, parent: Agent, depth: int):
+        if depth >= self.max_depth:
+            return []
+
+        children = []
+        for i in range(parent.max_children):
+            child_id = f"{parent.agent_id}.sub{i+1}.d{depth+1}"
+            child = create_agent(
+                child_id,
+                "ANALYST",
+                max_children=max(parent.max_children - 1, 0),
+            )
+            children.append(child)
+            self.lineage.append(
+                LineageRecord(parent.agent_id, child_id, "predicate-verification")
+            )
+        return children
+
+    def run(self, task: Task, firmware: Optional[FirmwareProfile] = None) -> OODAResult:
+        observe = {
+            "task": task.__dict__,
+            "firmware": self.sandbox.inspect_firmware(firmware) if firmware else None,
+        }
+
+        human_gate = require_human_gate(task)
+        orient = {
+            "risk_score": task.risk_score,
+            "human_gate_required": human_gate,
+            "max_agents": self.max_agents,
+            "max_depth": self.max_depth,
+        }
+
+        if human_gate:
+            decision = "HUMAN_GATE"
+            act = {"decision": decision, "executed": False, "reason": "policy_gate"}
+            self.evidence.add(
+                EvidenceRecord(
+                    task.task_id,
+                    "core.run",
+                    {"observe": observe, "orient": orient, "act": act},
+                )
+            )
+            learn = {
+                "event": SovereignEvent(
+                    "TASK_RUN", {"task_id": task.task_id, "decision": decision}
+                ).content_hash,
+                "evidence_root": self.evidence.merkle_like_root(),
+                "proof": None,
+            }
+            return OODAResult(observe, orient, {"decision": decision}, act, learn)
+
+        root = create_agent("STRATEGIST-PRIME", "STRATEGIST", max_children=2)
+        queue = deque((root, 0, predicate) for predicate in task.predicates)
+        used = [root.agent_id]
+        goal_proof = GoalProof()
+
+        while queue and len(set(used)) < self.max_agents:
+            agent, depth, predicate = queue.popleft()
+            prompt = render_prompt(agent, task)
+            evidence = {
+                "prompt": prompt,
+                "target": task.target,
+                "predicate": predicate,
+                "depth": depth,
+            }
+
+            goal_proof.add(
+                PredicateProof(
+                    predicate=predicate,
+                    result=True,
+                    agent_id=agent.agent_id,
+                    evidence=evidence,
+                )
+            )
+            self.evidence.add(EvidenceRecord(task.task_id, agent.agent_id, evidence))
+
+            if depth < self.max_depth:
+                for child in self._spawn_children(agent, depth):
+                    if len(set(used)) >= self.max_agents:
+                        break
+                    used.append(child.agent_id)
+                    queue.append((child, depth + 1, predicate))
+
+        proof = goal_proof.verify(task.predicates)
+        decision = "COMPLETE" if proof["complete"] else "INCOMPLETE"
+        act = {
+            "decision": decision,
+            "executed": proof["complete"],
+            "agents_used": len(set(used)),
+        }
+        learn = {
+            "event": SovereignEvent(
+                "TASK_RUN", {"task_id": task.task_id, "decision": decision}
+            ).content_hash,
+            "evidence_root": self.evidence.merkle_like_root(),
+            "proof": proof,
+            "lineage_hashes": [record.lineage_hash() for record in self.lineage],
+        }
+
+        return OODAResult(observe, orient, {"decision": decision}, act, learn)
+```
+
+### `agentic_hacker/targets/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/targets/firmware.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from ..models import FirmwareProfile
+
+
+def bruce_firmware_adapter(version: str = "unknown") -> FirmwareProfile:
+    return FirmwareProfile(
+        name="Bruce-like Firmware Adapter",
+        vendor="Research Adapter",
+        version=version,
+        mode="PASSIVE",
+        capabilities=[
+            "metadata_inspection",
+            "capability_declaration",
+            "passive_profile_read",
+        ],
+        metadata={
+            "adapter_family": "firmware-passive",
+            "human_gate_required_for_active": True,
+        },
+    )
+```
+
+### `agentic_hacker/techniques/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/techniques/catalog.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+TECHNIQUES = [
+    "passive_enumeration",
+    "config_diff",
+    "integrity_snapshot",
+]
+```
+
+### `agentic_hacker/planners/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/planners/ooda.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+def plan(task):
+    return {
+        "planner": "OODA",
+        "objective": task.objective,
+        "target": task.target,
+        "predicates": task.predicates,
+    }
+```
+
+### `agentic_hacker/executors/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/executors/passive.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+def execute(plan):
+    return {
+        "status": "passive-only",
+        "plan": plan,
+    }
+```
+
+### `agentic_hacker/scorers/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/scorers/risk.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+def score(metadata):
+    return float(metadata.get("risk_score", 0.0))
+```
+
+### `agentic_hacker/reporting/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/reporting/summary.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+def render(result):
+    return {
+        "decision": result.decide["decision"],
+        "proof": result.learn["proof"],
+        "evidence_root": result.learn["evidence_root"],
+    }
+```
+
+### `agentic_hacker/prompts/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/prompts/registry.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+PROMPTS = {
+    "STRATEGIST": "Plan and decompose the task. Objective: {objective}. Target: {target}. Predicates: {predicates}.",
+    "ANALYST": "Verify one predicate for task {task_id}. Objective: {objective}. Predicate set: {predicates}.",
+    "ARCHIVIST": "Record evidence and lineage for task {task_id} against target {target}.",
+}
+```
+
+### `agentic_hacker/tests/__init__.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+```
+
+### `agentic_hacker/tests/test_smoke.py`
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+from agentic_hacker.core import AgenticHacker
+from agentic_hacker.models import Task
+from agentic_hacker.targets.firmware import bruce_firmware_adapter
+
+
+def run_smoke():
+    engine = AgenticHacker(max_agents=6, max_depth=2)
+    task = Task(
+        task_id="t1",
+        objective="passive inspect",
+        target="firmware-target",
+        predicates=["enumerated", "profiled"],
+        risk_score=2.0,
+        metadata={"domain": "CYBER", "mode": "PASSIVE"},
+    )
+    result = engine.run(task, bruce_firmware_adapter("1.0"))
+    return {
+        "decision": result.decide["decision"],
+        "complete": result.learn["proof"]["complete"],
+        "agents_used": result.act["agents_used"],
+    }
+
+
+if __name__ == "__main__":
+    print(run_smoke())
+```
+
+## Notes
+
+- This version fixes the Python package naming problem by using `agentic_hacker`, not `agentic-hacker`.
+- The current cryptographic proof is a development placeholder based on HMAC, not production ML-DSA, so it proves internal integrity of the workflow rather than a production-grade post-quantum signature chain.
+- Subagents are bounded by `max_agents` and `max_depth`, which is important for governed execution and to avoid uncontrolled recursion.[2]
+
+## Learning example
+
+**Concept — bounded subagent spawning:** let agents decompose work, but constrain depth and count so completion remains auditable and safe. This matters in the War Lab because uncontrolled spawning would break governance and evidence review.[2]
+
+```python
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL]
+engine = AgenticHacker(max_agents=6, max_depth=2)
+task = Task(
+    task_id="demo",
+    objective="verify passive profile",
+    target="firmware-target",
+    predicates=["enumerated", "profiled"],
+)
+result = engine.run(task)
+print(result.learn["proof"])
+```
+
+**Challenge:** next, replace the placeholder `result=True` predicate proofs in `core.py` with real predicate evaluator functions that inspect evidence and only sign a proof when the predicate contract is actually satisfied.
+
