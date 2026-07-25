@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: neural-fabric
+  namespace: codex-warlab
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neural-fabric
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
