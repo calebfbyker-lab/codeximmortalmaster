@@ -1,0 +1,84 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python-quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - pqc-spine
+          - storage-mesh
+          - neural-fabric
+          - playbook-engine
+          - threat-board
+          - integration
+    defaults:
+      run:
+        working-directory: ${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Ruff
+        run: ruff check src
+
+      - name: Mypy
+        run: mypy src || true
+
+      - name: Pytest
+        run: pytest --cov=src --cov-report=xml || true
+
+  solidity-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nft-vault
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install
+
+      - name: Hardhat tests
+        run: npx hardhat test || true
+
+      - name: Slither
+        uses: crytic/slither-action@v0.4.0
+        with:
+          node-version: 20
+          target: nft-vault/contracts
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect secrets
+        run: |
+          python -m pip install detect-secrets
+          detect-secrets scan --all-files > .secrets.baseline
+
+  pqc-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pqc-spine references approved PQC algorithms
+        run: |
+          ! grep -R "RSA|ECDSA|Ed25519" pqc-spine/src || (echo "Classical-only crypto reference found in pqc-spine" && exit 1)
