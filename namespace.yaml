@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: codex-warlab
+  labels:
+    app.kubernetes.io/name: codex-warlab
+    app.kubernetes.io/version: "1.0.0"
+    codex.warlab/layer: full-stack
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: codex-warlab-quota
+  namespace: codex-warlab
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    pods: "60"
