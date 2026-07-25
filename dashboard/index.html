@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CodexImmortal Live Dashboard</title>
+  <style>
+    :root {
+      --bg: #0b0f0d;
+      --surface: #111714;
+      --surface-2: #16201b;
+      --surface-3: #1a2721;
+      --primary: #4ba488;
+      --primary-2: #72c3aa;
+      --text: #e7f2ed;
+      --muted: #95afa4;
+      --line: #23342d;
+      --red: #d86666;
+      --orange: #d49758;
+      --yellow: #c5b85f;
+      --green: #58b780;
+      --gray: #5e6d66;
+      --shadow: 0 10px 28px rgba(0,0,0,0.28);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --font: "Satoshi", Inter, system-ui, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #f4f7f5;
+      --surface: #ffffff;
+      --surface-2: #eef4f1;
+      --surface-3: #e6efea;
+      --primary: #1e7d63;
+      --primary-2: #2f9e7e;
+      --text: #15211b;
+      --muted: #566860;
+      --line: #d7e3dc;
+      --shadow: 0 10px 28px rgba(14, 30, 20, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+    body { min-height: 100vh; }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+    }
+
+    .topbar-inner {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 280px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), #2f5f52);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+
+    .logo svg { width: 24px; height: 24px; color: white; }
+
+    .brand-copy h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-copy p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 12px;
+      flex: 1;
+      min-width: 360px;
+    }
+
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .status-card strong {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: #07110d;
+      border-color: transparent;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .left-col, .right-col {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .right-col {
+      grid-template-rows: auto auto auto;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .panel-header p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .panel-body {
+      padding: 16px 18px 18px;
+    }
+
+    .threat-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .threat-table th, .threat-table td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .critical { background: rgba(216,102,102,.15); color: var(--red); }
+    .high { background: rgba(212,151,88,.16); color: var(--orange); }
+    .medium { background: rgba(197,184,95,.16); color: var(--yellow); }
+    .low { background: rgba(88,183,128,.16); color: var(--green); }
+
+    .detail-card {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+    }
+
+    .trace-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .trace-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+      align-items: center;
+    }
+
+    .trace-step {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary-2);
+    }
+
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .node-card {
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .node-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .node-meta {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(28px, 1fr));
+      gap: 8px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.06);
+      position: relative;
+    }
+
+    .cell::after {
+      content: attr(data-id);
+      position: absolute;
+      inset: auto 0 4px 0;
+      font-size: 9px;
+      text-align: center;
+      color: rgba(255,255,255,.78);
+    }
+
+    .timeline, .playbook-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-item, .playbook-item {
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+    }
+
+    .timeline-item strong, .playbook-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .progress {
+      margin-top: 10px;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.06);
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+    }
+
+    .footer {
+      padding: 16px 18px 28px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tiny {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .status-grid,
+      .node-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trace-item {
+        grid-template-columns: 1fr;
+      }
+
+      .heatmap {
+        grid-template-columns: repeat(4, minmax(28px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2 4 6v6c0 5 3.4 8.3 8 10 4.6-1.7 8-5 8-10V6l-8-4Z"/>
+              <path d="M8.5 12.2 11 14.7l4.8-5"/>
+            </svg>
+          </div>
+          <div class="brand-copy">
+            <h1>CodexImmortal War Lab</h1>
+            <p>Live Command Dashboard · MN-Net · Threat Board · Audit Surface</p>
+          </div>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <span>Shield Score</span>
+            <strong id="shieldScore">125.1</strong>
+          </div>
+          <div class="status-card">
+            <span>Active Threats</span>
+            <strong id="activeThreats">7</strong>
+          </div>
+          <div class="status-card">
+            <span>Agents Online</span>
+            <strong id="agentsOnline">4 / 4</strong>
+          </div>
+          <div class="status-card">
+            <span>Last OODA</span>
+            <strong id="lastOoda">07:59:44Z</strong>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button id="refreshBtn" class="primary">Refresh</button>
+          <button id="themeBtn">Toggle Theme</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="left-col">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Threat Board</h2>
+              <p>Live threats from /api/v1/threats with inline response actions.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <table class="threat-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Severity</th>
+                  <th>Domain</th>
+                  <th>Summary</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="threatRows"></tbody>
+            </table>
+            <div id="threatDetail" class="detail-card">
+              <strong>Select a threat row</strong>
+              <div class="muted">Threat details, evidence chain, and response controls appear here.</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Shard Integrity Heatmap</h2>
+              <p>Cluster health for verified, stale, tampered, and offline shards.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="heatmap" class="heatmap"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Playbook Console</h2>
+              <p>Recent playbooks with human gate banners and phase progress.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="playbookList" class="playbook-list"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="right-col">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>OODA Loop Trace</h2>
+              <p>Last 10 Observe → Orient → Decide → Act → Learn events.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="traceList" class="trace-list"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>MN-Net Node Status</h2>
+              <p>Sentinel, Strategist, Archivist, and Executor runtime state.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="nodeGrid" class="node-grid"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>NFT Provenance Timeline</h2>
+              <p>Recent mints and custody events flowing through the vault.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="timeline" class="timeline"></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      CALEB FEDOR BYKER KONEV · 10/27/1998 · CodexImmortal Agentic AI NFT War Lab
+    </footer>
+  </div>
+
+  <script>
+    const state = {
+      threats: [],
+      trace: [],
+      nodes: [],
+      shards: [],
+      timeline: [],
+      playbooks: []
+    };
+
+    const mockData = {
+      threats: [
+        { id: "TH-1042", severity: "CRITICAL", domain: "BIO", summary: "Anomalous lab telemetry crossing containment baseline", evidence: ["evidence:774", "proof:1002"], action: "LOCKDOWN LATTICE" },
+        { id: "TH-1043", severity: "HIGH", domain: "CRYPTO", summary: "Custody drift detected on shard ring 3", evidence: ["evidence:775", "nft:8831"], action: "TRUST PURGE" },
+        { id: "TH-1044", severity: "MEDIUM", domain: "ICS", summary: "Passive bus monitor saw out-of-profile command burst", evidence: ["evidence:776"], action: "OBSERVE" },
+        { id: "TH-1045", severity: "LOW", domain: "DISINFO", summary: "Narrative cluster spike tied to known campaign tags", evidence: ["evidence:777"], action: "FEDERATION SYNC" }
+      ],
+      trace: [
+        ["Observe", "Threat TH-1042 ingested with evidence bundle 774", "07:58:01Z"],
+        ["Orient", "SENTINEL scored anomaly at 0.93 with BIO gate trigger", "07:58:04Z"],
+        ["Decide", "STRATEGIST recommended LOCKDOWN LATTICE", "07:58:06Z"],
+        ["Act", "EXECUTOR opened HUMAN GATE and staged response plan", "07:58:09Z"],
+        ["Learn", "ARCHIVIST anchored snapshot lineage for replay", "07:58:12Z"]
+      ],
+      nodes: [
+        { name: "SENTINEL", status: "ONLINE", last: "2s ago", score: "0.93", hits: "18 evidence hits" },
+        { name: "STRATEGIST", status: "ONLINE", last: "3s ago", score: "0.91", hits: "2 COAs generated" },
+        { name: "ARCHIVIST", status: "ONLINE", last: "2s ago", score: "1.00", hits: "5 memory hits" },
+        { name: "EXECUTOR", status: "HUMAN GATE", last: "1s ago", score: "0.88", hits: "Gate opened" }
+      ],
+      shards: Array.from({ length: 32 }).map((_, i) => {
+        const cycle = i % 7;
+        const status = cycle === 0 ? "tampered" : cycle === 1 ? "stale" : cycle === 2 ? "offline" : "verified";
+        return { id: `S${i + 1}`, status };
+      }),
+      timeline: [
+        { token: "#8829", type: "RepairNFT", time: "07:54:33Z", link: "Base L2 pending index" },
+        { token: "#8830", type: "ThreatNFT", time: "07:56:09Z", link: "Base L2 pending index" },
+        { token: "#8831", type: "CustodyNFT", time: "07:57:11Z", link: "Base L2 pending index" },
+        { token: "#8832", type: "DecisionNFT", time: "07:58:15Z", link: "Base L2 pending index" }
+      ],
+      playbooks: [
+        { name: "LOCKDOWN LATTICE", phase: 2, pct: 56, gate: true, note: "Awaiting commander approval for BIO containment." },
+        { name: "TRUST PURGE", phase: 1, pct: 28, gate: false, note: "Key revocation plan staged." },
+        { name: "FEDERATION SYNC", phase: 3, pct: 100, gate: false, note: "Completed peer propagation." }
+      ]
+    };
+
+    function severityClass(severity) {
+      return severity.toLowerCase();
+    }
+
+    function colorForShard(status) {
+      return status === "verified"
+        ? "var(--green)"
+        : status === "stale"
+          ? "var(--yellow)"
+          : status === "tampered"
+            ? "var(--red)"
+            : "var(--gray)";
+    }
+
+    function renderThreats() {
+      const tbody = document.getElementById("threatRows");
+      tbody.innerHTML = "";
+      state.threats.forEach((threat) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${threat.id}</td>
+          <td><span class="badge ${severityClass(threat.severity)}">${threat.severity}</span></td>
+          <td>${threat.domain}</td>
+          <td>${threat.summary}</td>
+          <td><button data-respond="${threat.id}">Respond</button></td>
+        `;
+        tr.addEventListener("click", () => showThreatDetail(threat));
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll("button[data-respond]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute("data-respond");
+          await respondToThreat(id);
+        });
+      });
+    }
+
+    function showThreatDetail(threat) {
+      const panel = document.getElementById("threatDetail");
+      panel.innerHTML = `
+        <strong>${threat.id} · ${threat.domain}</strong>
+        <div class="muted" style="margin-top:6px;">${threat.summary}</div>
+        <div class="tiny" style="margin-top:10px;">Evidence: ${threat.evidence.join(", ")}</div>
+        <div class="tiny" style="margin-top:6px;">Recommended playbook: ${threat.action}</div>
+        <div class="inline-actions">
+          <button class="primary" data-inline-respond="${threat.id}">Respond</button>
+          <button data-inline-dismiss="${threat.id}">Dismiss</button>
+        </div>
+      `;
+
+      panel.querySelector("[data-inline-respond]").addEventListener("click", () => respondToThreat(threat.id));
+      panel.querySelector("[data-inline-dismiss]").addEventListener("click", () => {
+        panel.innerHTML = `<strong>Threat action cleared</strong><div class="muted">Inline action dismissed.</div>`;
+      });
+    }
+
+    function renderTrace() {
+      const wrap = document.getElementById("traceList");
+      wrap.innerHTML = state.trace.map(([step, text, ts]) => `
+        <div class="trace-item">
+          <div class="trace-step">${step}</div>
+          <div>${text}</div>
+          <div class="tiny">${ts}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderNodes() {
+      const wrap = document.getElementById("nodeGrid");
+      wrap.innerHTML = state.nodes.map((node) => `
+        <div class="node-card">
+          <h3>${node.name}</h3>
+          <div class="node-meta">
+            <div>Status: <strong>${node.status}</strong></div>
+            <div>Last active: ${node.last}</div>
+            <div>Score: ${node.score}</div>
+            <div>${node.hits}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderHeatmap() {
+      const wrap = document.getElementById("heatmap");
+      wrap.innerHTML = "";
+      state.shards.forEach((shard) => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.id = shard.id;
+        cell.style.background = colorForShard(shard.status);
+        cell.title = `${shard.id} · ${shard.status}`;
+        wrap.appendChild(cell);
+      });
+    }
+
+    function renderTimeline() {
+      const wrap = document.getElementById("timeline");
+      wrap.innerHTML = state.timeline.map((item) => `
+        <div class="timeline-item">
+          <strong>${item.token} · ${item.type}</strong>
+          <div class="muted">${item.time}</div>
+          <div class="tiny" style="margin-top:6px;">${item.link}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderPlaybooks() {
+      const wrap = document.getElementById("playbookList");
+      wrap.innerHTML = state.playbooks.map((item) => `
+        <div class="playbook-item">
+          <strong>${item.name}</strong>
+          <div class="muted">Phase ${item.phase} · ${item.note}</div>
+          ${item.gate ? `<div class="badge high" style="margin-top:10px;">Human Gate Pending</div>` : ""}
+          <div class="progress"><span style="width:${item.pct}%"></span></div>
+          <div class="inline-actions">
+            ${item.gate ? `<button class="primary">Approve</button><button>Deny</button>` : `<button>Inspect</button>`}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderHeaderStats() {
+      document.getElementById("activeThreats").textContent = String(state.threats.length);
+      document.getElementById("lastOoda").textContent = new Date().toISOString().split("T")[1].replace("Z", "Z");
+    }
+
+    async function fetchJson(url, fallback) {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "authorization": "Bearer dashboard-demo",
+            "x-client-cert-algorithm": "ML-DSA-65"
+          }
+        });
+        if (!res.ok) throw new Error("bad response");
+        return await res.json();
+      } catch {
+        return fallback;
+      }
+    }
+
+    async function respondToThreat(id) {
+      try {
+        await fetch(`/api/v1/threats/${id}/respond`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "authorization": "Bearer dashboard-demo",
+            "x-client-cert-algorithm": "ML-DSA-65"
+          },
+          body: JSON.stringify({ source: "dashboard", trigger: "operator-inline" })
+        });
+      } catch {}
+      const panel = document.getElementById("threatDetail");
+      panel.innerHTML = `<strong>${id}</strong><div class="muted">Response triggered from dashboard operator surface.</div>`;
+    }
+
+    async function loadDashboard() {
+      const threats = await fetchJson("/api/v1/threats", mockData.threats);
+      const ooda = await fetchJson("/api/v1/agents/ooda-trace", mockData.trace);
+      const nodes = await fetchJson("/api/v1/agents/status", mockData.nodes);
+      const timeline = await fetchJson("/api/v1/nft/recent", mockData.timeline);
+      const playbooks = await fetchJson("/api/v1/playbook/runs", mockData.playbooks);
+
+      state.threats = Array.isArray(threats) ? threats : mockData.threats;
+      state.trace = Array.isArray(ooda) ? ooda : mockData.trace;
+      state.nodes = Array.isArray(nodes) ? nodes : mockData.nodes;
+      state.timeline = Array.isArray(timeline) ? timeline : mockData.timeline;
+      state.playbooks = Array.isArray(playbooks) ? playbooks : mockData.playbooks;
+      state.shards = mockData.shards;
+
+      renderThreats();
+      renderTrace();
+      renderNodes();
+      renderHeatmap();
+      renderTimeline();
+      renderPlaybooks();
+      renderHeaderStats();
+    }
+
+    function connectThreatSocket() {
+      try {
+        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(`${proto}//${location.host}/api/v1/threats/ws`);
+        ws.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (Array.isArray(payload.threats)) {
+              state.threats = payload.threats;
+              renderThreats();
+              renderHeaderStats();
+            }
+            if (typeof payload.shield_score !== "undefined") {
+              document.getElementById("shieldScore").textContent = String(payload.shield_score);
+            }
+          } catch {}
+        };
+      } catch {}
+    }
+
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const root = document.documentElement;
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+
+    loadDashboard();
+    connectThreatSocket();
+    setInterval(loadDashboard, 15000);
+  </script>
+</body>
+</html>
