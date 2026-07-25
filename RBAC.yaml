@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neural-fabric
+  namespace: codex-warlab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threat-board
+  namespace: codex-warlab
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: config-reader
+  namespace: codex-warlab
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: neural-fabric-config-reader
+  namespace: codex-warlab
+subjects:
+  - kind: ServiceAccount
+    name: neural-fabric
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: config-reader
