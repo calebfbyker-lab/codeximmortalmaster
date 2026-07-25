@@ -1,0 +1,196 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: codex
+      POSTGRES_USER: codex
+      POSTGRES_PASSWORD: codex
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - codex-internal
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - codex-internal
+
+  vault:
+    image: hashicorp/vault:1.15
+    cap_add: ["IPC_LOCK"]
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: root
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8200/v1/sys/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - vault_data:/vault/file
+    networks:
+      - codex-internal
+
+  ipfs:
+    image: ipfs/kubo:latest
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - codex-internal
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.106.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    networks:
+      - codex-internal
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - codex-internal
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - codex-internal
+
+  loki:
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - loki_data:/loki
+    networks:
+      - codex-internal
+
+  tempo:
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - tempo_data:/tmp/tempo
+    networks:
+      - codex-internal
+
+  pqc-spine-api:
+    build: ../../pqc-spine
+    env_file: ../../.env
+    depends_on:
+      vault:
+        condition: service_started
+    ports:
+      - "8090:8090"
+    networks:
+      - codex-internal
+
+  storage-mesh-api:
+    build: ../../storage-mesh
+    env_file: ../../.env
+    depends_on:
+      ipfs:
+        condition: service_started
+    ports:
+      - "8091:8091"
+    networks:
+      - codex-internal
+
+  neural-fabric-api:
+    build: ../../neural-fabric
+    env_file: ../../.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8092:8092"
+    networks:
+      - codex-internal
+
+  nft-vault-api:
+    build: ../../nft-vault
+    env_file: ../../.env
+    ports:
+      - "8093:8093"
+    networks:
+      - codex-internal
+
+  playbook-engine:
+    build: ../../playbook-engine
+    env_file: ../../.env
+    ports:
+      - "8094:8094"
+    networks:
+      - codex-internal
+
+  threat-board-api:
+    build: ../../threat-board
+    env_file: ../../.env
+    ports:
+      - "8095:8095"
+    networks:
+      - codex-internal
+      - codex-external
+
+  dashboard:
+    image: nginx:alpine
+    volumes:
+      - ../../dashboard:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    networks:
+      - codex-external
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - pqc-spine-api
+      - storage-mesh-api
+      - neural-fabric-api
+      - nft-vault-api
+      - playbook-engine
+      - threat-board-api
+      - dashboard
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - codex-internal
+      - codex-external
+
+networks:
+  codex-internal:
+    driver: bridge
+  codex-external:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  vault_data:
+  ipfs_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
