@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neural-fabric
+  namespace: codex-warlab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threat-board
+  namespace: codex-warlab
