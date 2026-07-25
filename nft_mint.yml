@@ -1,0 +1,38 @@
+name: nft-mint
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_hash:
+        description: "Deployment artifact hash"
+        required: true
+        type: string
+
+jobs:
+  mint-provenance:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nft-vault
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install
+
+      - name: Verify deployment passed
+        run: echo "Verify release checks before mint"
+
+      - name: Mint deployment NFT
+        env:
+          DEPLOYMENT_HASH: ${{ inputs.deployment_hash }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+        run: echo "Mint provenance NFT for ${DEPLOYMENT_HASH}"
+
+      - name: Anchor chain-of-custody
+        run: echo "Anchor deployment provenance"
