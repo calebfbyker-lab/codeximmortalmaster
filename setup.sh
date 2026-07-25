@@ -234,3 +234,188 @@ Next:
   - Wire configs to services.
   - Add dependency files (requirements.txt, package.json) per package.
 EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+# CodexImmortal Agentic AI NFT War Lab
+# Author: Caleb Fedor Byker Konev | 10/27/1998
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-SCAFFOLD]
+
+PROJECT_NAME="codeximmortal-warlab"
+
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME"
+
+git init
+
+mkdir -p \
+  pqc-spine/src/pqc_spine \
+  storage-mesh/src/storage_mesh \
+  neural-fabric/src/neural_fabric/{nodes,memory} \
+  nft-vault/{contracts,scripts,test} \
+  playbook-engine/src/playbook_engine \
+  threat-board/src/threat_board \
+  dashboard \
+  integration/src/integration \
+  infra/{docker,k8s,github} \
+  scripts \
+  config/profiles \
+  tests
+
+cat > .gitignore <<'EOF'
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+node_modules/
+artifacts/
+cache/
+dist/
+build/
+coverage.xml
+.coverage
+EOF
+
+cat > .pre-commit-config.yaml <<'EOF'
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
+    hooks:
+      - id: ruff
+      - id: ruff-format
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+EOF
+
+create_python_pkg() {
+  local pkg_dir="$1"
+  local module_name="$2"
+  cat > "${pkg_dir}/src/${module_name}/__init__.py" <<EOF
+# CodexImmortal Agentic AI NFT War Lab
+# Author: Caleb Fedor Byker Konev | 10/27/1998
+# [CODEX-TAG: CALEB-FEDOR-BYKER-KONEV-10271998-SCAFFOLD]
+
+"""${module_name} package."""
+EOF
+
+  cat > "${pkg_dir}/README.md" <<EOF
+# ${module_name}
+
+CodexImmortal package: ${module_name}
+EOF
+
+  cat > "${pkg_dir}/requirements.txt" <<'EOF'
+pydantic==2.8.2
+pydantic-settings==2.3.4
+networkx==3.3
+neo4j==5.23.0
+pytest==8.3.2
+EOF
+
+  cat > "${pkg_dir}/.env.example" <<'EOF'
+LOG_LEVEL=INFO
+ENVIRONMENT=dev
+EOF
+
+  cat > "${pkg_dir}/Dockerfile" <<'EOF'
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ ./src/
+CMD ["python", "-m", "src"]
+EOF
+}
+
+create_python_pkg "pqc-spine" "pqc_spine"
+create_python_pkg "storage-mesh" "storage_mesh"
+create_python_pkg "neural-fabric" "neural_fabric"
+create_python_pkg "playbook-engine" "playbook_engine"
+create_python_pkg "threat-board" "threat_board"
+create_python_pkg "integration" "integration"
+
+cat > nft-vault/package.json <<'EOF'
+{
+  "name": "nft-vault",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "hardhat": "2.22.10",
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "solidity-coverage": "0.8.12"
+  }
+}
+EOF
+
+cat > nft-vault/README.md <<'EOF'
+# nft-vault
+
+ERC-721 provenance vault for CodexImmortal.
+EOF
+
+cat > nft-vault/.env.example <<'EOF'
+BASE_RPC_URL=
+DEPLOYER_PRIVATE_KEY=
+EOF
+
+cat > nft-vault/Dockerfile <<'EOF'
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json .
+RUN npm install
+COPY . .
+CMD ["npx", "hardhat", "test"]
+EOF
+
+cat > dashboard/index.html <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CodexImmortal Dashboard</title>
+</head>
+<body>
+  <h1>CodexImmortal Dashboard</h1>
+  <p>Command UI scaffold.</p>
+</body>
+</html>
+EOF
+
+cat > dashboard/README.md <<'EOF'
+# dashboard
+
+Vanilla HTML/CSS/JS command UI scaffold.
+EOF
+
+cat > infra/docker/docker-compose.yml <<'EOF'
+version: "3.9"
+services:
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+EOF
+
+cat > scripts/bootstrap.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+python --version
+echo "CodexImmortal bootstrap complete."
+EOF
+chmod +x scripts/bootstrap.sh
+
+cat > README.md <<'EOF'
+# codeximmortal-warlab
+
+Monorepo scaffold for CodexImmortal Agentic AI NFT War Lab.
+EOF
+
+echo "Scaffold created in ${PROJECT_NAME}"
