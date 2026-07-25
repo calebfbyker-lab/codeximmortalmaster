@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: codex-warlab
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-nginx-to-apis
+  namespace: codex-warlab
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - pqc-spine
+          - storage-mesh
+          - neural-fabric
+          - nft-vault
+          - playbook-engine
+          - threat-board
+  ingress:
+    - from:
+        - namespaceSelector: {}
+  policyTypes:
+    - Ingress
