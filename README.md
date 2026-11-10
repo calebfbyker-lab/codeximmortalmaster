@@ -1,5 +1,7 @@
 # CodexImmortal Master
 
+[![CI](https://github.com/calebfbyker-lab/codeximmortalmaster/actions/workflows/ci.yml/badge.svg)](https://github.com/calebfbyker-lab/codeximmortalmaster/actions/workflows/ci.yml)
+
 **A governed multi-agent AI platform — post-quantum cryptography, Byzantine fault-tolerant agent orchestration, sharded distributed storage, and cryptographically attested audit trails.**
 
 This is the engineering monorepo for CodexImmortal: a reference implementation of production-grade agentic AI architecture for defense and enterprise automation. It demonstrates end-to-end systems engineering — cryptographic services, multi-agent coordination, distributed storage, zero-trust deployment, and governed CI/CD.
@@ -49,7 +51,7 @@ cd codeximmortalmaster
 pip install -r requirements-dev.txt
 
 # 2. Configure environment
-cp dev.env .env   # templates only — all secrets injected at runtime via Vault
+cp .env.example .env   # template only — fill in local values; secrets come from Vault
 
 # 3. Run the full stack
 bash bootstrap_warlab.sh      # or: docker compose up -d
@@ -70,7 +72,8 @@ codeximmortalmaster/
 ├── apps/              # application entry points
 ├── config/            # staged environment configuration
 ├── dashboard/         # War Lab dashboard surface
-├── docs/              # architecture, build checklist, governance
+├── docs/              # architecture, checklists, design references
+├── k8s/               # Kubernetes manifests (neural-fabric service)
 ├── neural_fabric/     # inference + agent graph services
 ├── packages/          # capability module packages
 ├── policies/          # execution + trust policies
@@ -87,7 +90,7 @@ Consolidation of root-level service modules into `packages/` is tracked in the b
 
 ## Security
 
-- **No secrets in version control** — committed `*.env` files are templates with blank credentials; production secrets are injected at runtime via HashiCorp Vault.
+- **No secrets in version control** — only `.env.example` is committed; populated `.env` files are gitignored, and production secrets are injected at runtime via HashiCorp Vault.
 - **Human-gated operations** — high-impact actions (master shard rotation, doctrine changes, registry renumbering, kinetic/space/OT domains, funding) always require an explicit human approval step.
 - **HNDL posture** — post-quantum migration is treated as a harvest-now-decrypt-later defense priority.
 

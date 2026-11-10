@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+
+# Environment — templates only, never commit populated values
+.env
+*.env
+
+# Node
+node_modules/
+dist/
+build/
+
+# Tooling artifacts
+*.log
+.DS_Store
+.secrets.baseline
+sbom.json
