@@ -1,212 +1,113 @@
-# codeximmortalmaster
-# CODEXIMMORTAL WAR LAB BUILD CHECKLIST
-**CODEX-TAG:** CALEB-FEDOR-BYKER-KONEV-10271998-CODEXIMMORTAL
+# CodexImmortal Master
 
-CodexImmortal is a monorepo architecture for post-quantum cryptography, shard vault storage, MN-NET agent coordination, NFT provenance, autonomous playbooks, threat detection, full-stack deployment, and self-evolving orchestration. This checklist tracks implementation across MVP, Phase 2 hardening, and Advanced capabilities. 
+**A governed multi-agent AI platform — post-quantum cryptography, Byzantine fault-tolerant agent orchestration, sharded distributed storage, and cryptographically attested audit trails.**
 
----
+This is the engineering monorepo for CodexImmortal: a reference implementation of production-grade agentic AI architecture for defense and enterprise automation. It demonstrates end-to-end systems engineering — cryptographic services, multi-agent coordination, distributed storage, zero-trust deployment, and governed CI/CD.
 
-## Build Status
-
-- [ ] Repo scaffolded
-- [ ] Core services booting
-- [ ] MVP complete
-- [ ] Phase 2 hardening complete
-- [ ] Advanced federation/evolution complete
-- [ ] Human-gated modules reviewed
-- [ ] Audit lineage attached
+> **Status:** Active development. All capability modules are tracked in the CodexImmortal CI registry; delivery and certification state is maintained in [`docs/BUILD_CHECKLIST.md`](docs/BUILD_CHECKLIST.md). Registry attestation per module is pending AX-layer certification — treat deployed code as UNCERTIFIED until certified.
 
 ---
 
-## Top-Level Packages
+## What This Repo Demonstrates
 
-- [ ] `pqc-spine`
-- [ ] `storage-mesh`
-- [ ] `neural-fabric`
-- [ ] `nft-vault`
-- [ ] `playbook-engine`
-- [ ] `threat-board`
-- [ ] `dashboard`
-- [ ] `integration`
-- [ ] `infra`
-- [ ] `scripts`
+- **Post-quantum cryptography in practice** — ML-KEM / ML-DSA signing and encapsulation via liboqs (`pqc_signer_oqs.py`), with environment-tiered algorithms (ML-DSA-65 / ML-KEM-768 in dev, ML-DSA-87 / ML-KEM-1024 in production).
+- **Multi-agent orchestration** — four cooperating agents (SENTINEL, STRATEGIST, ARCHIVIST, EXECUTOR) running OODA decision loops under Byzantine fault-tolerant consensus (`consensus.py`).
+- **Agent memory as a graph** — persistent knowledge, context, and episodic state on Neo4j (`graph_store.py`, `graph_bridge.py`, `neo4j_query.py`, `context_store.py`).
+- **Sharded, tamper-evident storage** — Shamir-split artifacts distributed across IPFS / Arweave / Filecoin with Merkle tamper detection (`storage_mesh/`, `vault_loader.py`).
+- **Zero-trust deployment** — Kubernetes with SPIFFE/SPIRE workload identity, HashiCorp Vault secret injection, and default-deny network policies.
+- **Local-first AI** — Ollama-hosted inference (llama3.2, 8K context) with no external model dependency.
+- **Engineering discipline** — unit-tested core services, staged environment configuration, dockerized full stack.
 
 ---
 
-## MVP
+## Architecture
 
-### Phase 0 — Bootstrap
-- [ ] Prompt 1 — Full Project Scaffold Generator
-- [ ] Prompt 2 — CICD Pipeline Builder
-- [ ] Prompt 3 — Master Configuration Schema
+CodexImmortal is organized into five sovereign layers:
 
-### Phase 1 — PQC Spine
-- [ ] Prompt 4 — PQC Core Library Builder
-- [ ] Prompt 6 — Key Ceremony CLI Tool
-- [ ] Prompt 7 — PQC Message Bus
+| Layer | Responsibility | Representative code |
+|---|---|---|
+| **PQC Spine** | Post-quantum key lifecycle, signing, validation (FIPS 203/204/205 alignment) | `pqc_signer_oqs.py`, `signer.py`, `validator.py` |
+| **Shard Vault** | Shamir-split secret storage across decentralized backends, Merkle tamper detection | `storage_mesh/`, `vault_loader.py`, `sync.py` |
+| **MN-NET** | Four-agent mesh (SENTINEL / STRATEGIST / ARCHIVIST / EXECUTOR), OODA loops, BFT consensus | `sentinel.py`, `strategist.py`, `archivist.py`, `executor.py`, `consensus.py`, `graph.py` |
+| **NFT Vault** | ERC-721 attestation on Base L2 with ZK-proof references | `schema.py`, `nft_mint.yml` |
+| **Playbooks** | Lockdown, sovereign restore, trust purge, federation sync operations | `runner.py`, `node_factory.py`, `policies/` |
 
-### Phase 2 — Storage Mesh
-- [ ] Prompt 9 — Shard Vault Core Engine
-- [ ] Prompt 10 — IPFS/Web3 Storage Connector
-- [ ] Prompt 12 — Storage Policy Engine
-- [ ] Prompt 13 — Merkle Tamper Detection System
+Supporting infrastructure: FastAPI gateway (`api_gateway.py`), multi-model persistence (`knowledge_store.py`, `graph_store.py`, `state.py`), and Kubernetes deployment manifests (namespace, ingress, network policies, SPIRE, Vault injector).
 
-### Phase 3 — Neural Fabric
-- [ ] Prompt 14 — Full LangGraph Agent System
-- [ ] Prompt 15 — Agent Memory Graph Database
-- [ ] Prompt 17 — Agent Telemetry OTEL Pipeline
-- [ ] Prompt 18 — Human-in-the-Loop Gate System
+## Tech Stack
 
-### Phase 4 — NFT Vault
-- [ ] Prompt 20 — Smart Contract Suite
-- [ ] Prompt 21 — NFT Minting Service
-
-### Phase 5 — Playbooks
-- [ ] Prompt 25 — Playbook Engine Core
-- [ ] Prompt 26 — Action Library
-
-### Phase 6 — Threat Operations
-- [ ] Prompt 27 — Live Threat Board API
-
-### Phase 7 — Full Stack Integration
-- [ ] Prompt 29 — Docker Compose Full Stack
-- [ ] Prompt 31 — API Gateway Service Mesh
-
-### Phase 8 — Command Surface
-- [ ] Prompt 32 — Live War Lab Dashboard
-- [ ] Prompt 33 — Agent CLI Operator Console
-
-### MVP Orchestrator
-- [ ] Prompt 38 — Master Orchestrator / Immortal Core (guarded MVP subset)
+Python · FastAPI · LangGraph · Neo4j · Ollama (llama3.2) · Docker Compose · Kubernetes · HashiCorp Vault · SPIFFE/SPIRE · liboqs · GitHub Actions
 
 ---
 
-## MVP Capability Modules
+## Quickstart
 
-- [ ] CI-001 — PQC-ARCH
-- [ ] CI-002 — SHARD-VAULT
-- [ ] CI-003 — MN-NET-CORE
-- [ ] CI-004 — NFT-MINT
-- [ ] CI-006 — KEY-ROTATION
-- [ ] CI-007 — STORAGE-POLICY
-- [ ] CI-008 — CUSTODY-CHAIN
-- [ ] CI-009 — THREAT-BOARD
-- [ ] CI-011 — LOCKDOWN-LATTICE
-- [ ] CI-013 — SOVEREIGN-RESTORE
-- [ ] CI-017 — LANGRAPH-WARLAB
-- [ ] CI-021 — SOVEREIGN-DB
-- [ ] CI-022 — DASHBOARD-GEN
-- [ ] CI-023 — FULL-STACK-ARCH
+```bash
+# 1. Install dependencies
+git clone https://github.com/calebfbyker-lab/codeximmortalmaster.git
+cd codeximmortalmaster
+pip install -r requirements-dev.txt
 
----
+# 2. Configure environment
+cp dev.env .env   # templates only — all secrets injected at runtime via Vault
 
-## Phase 2 Hardening
+# 3. Run the full stack
+bash bootstrap_warlab.sh      # or: docker compose up -d
 
-### Security and Trust
-- [ ] Prompt 5 — Quantum Threat Scanner
-- [ ] Prompt 8 — PQC TLS Reverse Proxy Config
-- [ ] Prompt 11 — Dead-Drop Vault Builder
-- [ ] Prompt 16 — Adversarial ML Detection Engine
-- [ ] Prompt 19 — Continuous Learning Loop
-- [ ] Prompt 22 — ZK Proof Circuit Builder
-- [ ] Prompt 23 — On-Chain Governance Module
-- [ ] Prompt 24 — Wallet Identity SPIFFE Bridge
-- [ ] Prompt 28 — Automated Red Team Suite
-- [ ] Prompt 30 — Kubernetes Deployment Manifests
+# 4. Run the test suite
+python -m pytest
+```
 
-### Phase 2 Capability Modules
-- [ ] CI-005 — ZK-PROOF
-- [ ] CI-010 — RED-TEAM
-- [ ] CI-012 — TRUST-PURGE
-- [ ] CI-014 — HNDL-TRIAGE
-- [ ] CI-015 — AI-PIPELINE
-- [ ] CI-016 — OLLAMA-DEPLOY
-- [ ] CI-019 — OSINT-FUSION
-- [ ] CI-020 — KILL-CHAIN-MAP
-- [ ] CI-024 — SUPPLY-CHAIN-SEC
-- [ ] CI-025 — INSIDER-DETECT
-- [ ] CI-028 — MODEL-POISON-DEF
-- [ ] CI-030 — WALLET-DRIFT
-- [ ] CI-038 — MODEL-CHECKPOINT
-- [ ] CI-039 — CERT-CHAIN
+Local AI inference requires [Ollama](https://ollama.com) with the `llama3.2` model pulled.
 
 ---
 
-## Advanced
+## Repository Layout
 
-### Self-Evolution and Federation
-- [ ] Prompt 34 — Self-Improvement Loop
-- [ ] Prompt 35 — Federated Multi-Node Coordinator
-- [ ] Prompt 36 — War Lab Simulation Environment
-- [ ] Prompt 37 — Prompt Evolution Engine
+```
+codeximmortalmaster/
+├── agents/            # MN-NET agent definitions
+├── apps/              # application entry points
+├── config/            # staged environment configuration
+├── dashboard/         # War Lab dashboard surface
+├── docs/              # architecture, build checklist, governance
+├── neural_fabric/     # inference + agent graph services
+├── packages/          # capability module packages
+├── policies/          # execution + trust policies
+├── scripts/           # operational scripts
+├── src/               # core library source
+├── storage_mesh/      # shard vault backends
+├── tests/             # integration tests
+└── *.py               # core services (gateway, agents, stores, PQC)
+```
 
-### Advanced Active Capability Modules
-- [ ] CI-018 — FEDERATED-MESH
-- [ ] CI-026 — ICS-SCADA-SEC
-- [ ] CI-027 — SPACE-SEC
-- [ ] CI-029 — GPU-DISPATCH
-- [ ] CI-031 — GEOINT-FUSION
-- [ ] CI-032 — BIO-THREAT
-- [ ] CI-033 — FIN-THREAT
-- [ ] CI-034 — DISINFO-DETECT
-- [ ] CI-035 — FEDERATED-MESH-V2
-- [ ] CI-036 — CROSS-MESH-FED
-- [ ] CI-037 — EPOCH-LEDGER
-- [ ] CI-040 — OSINT-AGENT-V2
-- [ ] CI-041 — THREAT-HUNT
-
-### Planned Capability Modules
-- [ ] CI-042 — SPACE-KINETIC-MESH
-- [ ] CI-043 — ICS-KILL-SWITCH-GUARD
-- [ ] CI-044 — SUPPLY-CHAIN-ZERO-HNDL
-- [ ] CI-045 — INSIDER-TRUST-GRAPH
-- [ ] CI-046 — GLOBAL-EPOCHNFT-V2
-- [ ] CI-047 — MESH-REWARD-VAULTS
-- [ ] CI-048 — MULTI-THEATER-MN-NET
-- [ ] CI-049 — DEFENSE-BUDGET-TWIN
-- [ ] CI-050 — AUTO-SPRINT-FUNDING
-- [ ] CI-051 — DOCTRINE-VAULT
+Consolidation of root-level service modules into `packages/` is tracked in the build checklist.
 
 ---
 
-## Human-Gated Modules
+## Security
 
-These modules require explicit review before promotion because the War Lab doctrine requires a human gate for high-impact operations and for KINETIC, BIO, SPACE, TS/SCI, master shard rotation, and severe red-team paths.
+- **No secrets in version control** — committed `*.env` files are templates with blank credentials; production secrets are injected at runtime via HashiCorp Vault.
+- **Human-gated operations** — high-impact actions (master shard rotation, doctrine changes, registry renumbering, kinetic/space/OT domains, funding) always require an explicit human approval step.
+- **HNDL posture** — post-quantum migration is treated as a harvest-now-decrypt-later defense priority.
 
-- [ ] CI-010 — RED-TEAM
-- [ ] CI-027 — SPACE-SEC
-- [ ] CI-032 — BIO-THREAT
-- [ ] CI-042 — SPACE-KINETIC-MESH
-- [ ] CI-043 — ICS-KILL-SWITCH-GUARD
-- [ ] CI-048 — MULTI-THEATER-MN-NET
-- [ ] CI-050 — AUTO-SPRINT-FUNDING
-- [ ] CI-051 — DOCTRINE-VAULT
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
----
+## Governance and the CI Registry
 
-## Suggested Order
+Every capability is a registered CI module under canonical numbering governed by the AX-03 REGISTRY-SYNC ledger — currently spanning CI-001 through CI-059 plus proposed frontier slots, covering PQC architecture, insider-threat detection, OSINT fusion, model-poisoning defense, cross-mesh federation, and agent memory. Delivery status, human-gate requirements, and the full module matrix live in [`docs/BUILD_CHECKLIST.md`](docs/BUILD_CHECKLIST.md).
 
-1. Complete all MVP items first.
-2. Harden with Phase 2 security, governance, and trust controls.
-3. Add Advanced federation, simulation, and self-evolution last.
-4. Keep sensitive modules behind human review and audit lineage before promotion.
+> Note: NFT/crypto attestation terminology describes this platform's own design. It does not represent government endorsement, a contract, or authorization.
 
 ---
 
-## Notes
+## License
 
-- Builder execution order follows Phases 0 through 9.
-- Self-evolving modules should not ship before telemetry, audit, and gate controls are stable.
-- Production promotion should attach provenance, audit, and governance evidence.
+Apache License 2.0 — see [LICENSE](LICENSE).
 
----
+## Contact
 
-## Audit Trail
+**Caleb Byker** — Founder, CodexImmortal
+Web: [codeximmortal.com](https://codeximmortal.com) · GitHub: [@calebfbyker-lab](https://github.com/calebfbyker-lab)
 
-- [ ] Config validated
-- [ ] Tests passing
-- [ ] Security scan passing
-- [ ] Red team review complete
-- [ ] Human gate approvals captured
-- [ ] NFT lineage minted
-- [ ] Deployment recorded
+*The War Lab never reaches final form. Evolution = Sovereignty.*
