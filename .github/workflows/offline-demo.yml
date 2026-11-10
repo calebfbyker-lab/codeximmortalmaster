@@ -1,0 +1,50 @@
+name: Offline demo
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-demo:
+    name: Offline demo (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run isolated tests (failures block this job)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p demo-artifacts
+          python -m unittest discover -s tests_offline -v 2>&1 | tee demo-artifacts/tests.txt
+      - name: Exercise CLI outcomes and verify receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m codex_demo run --scenario routine > demo-artifacts/routine.json
+          python -m codex_demo verify demo-artifacts/routine.json
+          set +e
+          python -m codex_demo run --scenario human_gate > demo-artifacts/human-gate.json
+          gate_status=$?
+          python -m codex_demo run --scenario tampered > demo-artifacts/tampered.stdout 2> demo-artifacts/tampered.json
+          tamper_status=$?
+          set -e
+          test "$gate_status" -eq 3
+          test "$tamper_status" -eq 2
+          python -m codex_demo verify demo-artifacts/human-gate.json
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-demo-python-${{ matrix.python }}
+          path: demo-artifacts/
+          if-no-files-found: error
+          retention-days: 14
